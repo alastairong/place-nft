@@ -1,6 +1,13 @@
 use hdk::prelude::*;
-use place_integrity::*;
 
+mod utils;
+pub use utils::*;
+mod placements;
+pub use placements::*;
+mod snapshots;
+pub use snapshots::*;
+mod ranking;
+pub use ranking::*;
 
 /// Called the first time a zome call is made to the cell containing this zome
 #[hdk_extern]
