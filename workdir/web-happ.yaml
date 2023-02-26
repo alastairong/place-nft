@@ -1,0 +1,7 @@
+---
+manifest_version: "1"
+name: place-nft
+ui:
+  bundled: "../ui/dist.zip"
+happ_manifest:
+  bundled: "./place-nft.happ"

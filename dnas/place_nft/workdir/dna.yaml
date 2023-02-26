@@ -1,0 +1,19 @@
+---
+manifest_version: "1"
+name: place_nft
+integrity:
+  network_seed: ~
+  properties: ~
+  origin_time: 1677423474671549
+  zomes:
+    - name: place_integrity
+      hash: ~
+      bundled: "../../../target/wasm32-unknown-unknown/release/place_integrity.wasm"
+      dependencies: ~
+coordinator:
+  zomes:
+    - name: place
+      hash: ~
+      bundled: "../../../target/wasm32-unknown-unknown/release/place.wasm"
+      dependencies:
+        - name: place_integrity
