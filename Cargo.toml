@@ -11,7 +11,7 @@ members = ["dnas/*/zomes/coordinator/*", "dnas/*/zomes/integrity/*"]
 hdi = "=0.2.1"
 hdk = "=0.1.1"
 serde = "1"
-# zome_utils = { git = "https://github.com/ddd-mtl/zome-utils", branch = "beta.1.0" }
+zome_utils = { git = "https://github.com/alastairong/zome-utils", branch = "beta.1.1" }
 
 [workspace.dependencies.place]
 path = "dnas/place_nft/zomes/coordinator/place"
