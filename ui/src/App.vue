@@ -33,8 +33,7 @@ export default defineComponent({
   async mounted() {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    this.client = await AppAgentWebsocket('', 'place-nft');
-
+    this.client = await AppAgentWebsocket.connect('', 'place-nft');
     this.loading = false;
   },
   provide() {

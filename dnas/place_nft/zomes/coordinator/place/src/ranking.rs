@@ -25,23 +25,32 @@ pub struct GetPlacementAuthorInput {
 #[hdk_extern]
 pub fn get_author_rank(input: GetAuthorRankInput) -> ExternResult<u16> {
   std::panic::set_hook(Box::new(zome_panic_hook));
-  //debug!("*** get_author_rank() CALLED");
+  debug!("*** get_author_rank() CALLED");
   let mut placement_links = get_links(
     bucket_index_to_path(input.bucket_index).path_entry_hash()?,
     LinkTypes::PlacementLink,
     None,
   )?;
-  
+  debug!("*** get_author_rank() placement_links: {:?}", placement_links);
+
+  if placement_links.len() == 0 {
+    debug!("*** get_author_rank() no placement_links found");
+    return Ok(0);
+  }
+
   placement_links.sort_by(|a, b| b.timestamp.cmp(&a.timestamp)); //newest first
 
-  let mut i = 1;
   /* For each placement check if its author matchs input ; attribute rank according to the number
    * of placements we had to go through
    */
-
+ 
+  let mut i = 1;
+  debug!("*** get_author_rank() iterating to check author rank");
   for link in placement_links.iter() {
     let author_bytes = link.tag.clone().into_inner();
+    debug!("*** get_author_rank() author_bytes: {:?}", author_bytes);
     let author: HoloHash<Agent> = HoloHash::from_raw_39(author_bytes).unwrap();
+    debug!("*** get_author_rank() author: {:?}", author);
     if author == input.author.clone().into() {
       return Ok(i);
     }

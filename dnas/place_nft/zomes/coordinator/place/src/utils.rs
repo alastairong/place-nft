@@ -7,9 +7,10 @@ use place_integrity::globals::*;
 pub const ROOT: &'static str = "root";
 
 /// Determine bucket path from time in sec
-/// Format is Root::HourIndex::BucketIndexInHour
+/// Format is Root::HourIndex::bucket_indexInHour
 pub fn get_path(now: u32) -> Path {
    let sec_since_start_of_game = now - START_TIME;
+   debug!("sec_since_start_of_game is: {}", sec_since_start_of_game);
    assert!(sec_since_start_of_game < 24 * 3600);
 
    // create hour path component

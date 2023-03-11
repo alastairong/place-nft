@@ -2,6 +2,7 @@ use hdi::prelude::*;
 use crate::LinkTypes;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DestructuredPlacement {
    x: u16,
    y: u16,

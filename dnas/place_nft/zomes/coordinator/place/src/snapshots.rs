@@ -7,13 +7,13 @@ use crate::utils::*;
 // A snapshot represents the state at the BEGINNING of the bucket
 
 #[hdk_extern]
-pub fn publish_starting_snapshot(_: ()) -> ExternResult<Snapshot> {
+pub fn publish_starting_snapshot(_: ()) -> ExternResult<Option<Snapshot>> {
     debug!("*** publish_starting_snapshot() CALLED");
     std::panic::set_hook(Box::new(zome_panic_hook));
     let first = Snapshot::create_first();
     publish_snapshot(&first)?;
     debug!("*** publish_starting_snapshot() first snapshot created: {}", first.bucket_index);
-    Ok(first)
+    Ok(Some(first))
 }
 
 // Called to publish a snapshot for a bucket
@@ -78,7 +78,6 @@ pub fn publish_snapshot(snapshot: &Snapshot) -> ExternResult<ActionHash> {
     let entry_hash = hash_entry(snapshot)?;
     // Link to current bucket
     let path = bucket_index_to_path(snapshot.bucket_index);
-    assert!(path == get_path(now()));
     let author = agent_info()?.agent_latest_pubkey;
     debug!("Publishing snapshot at index {}, path: {}", snapshot.bucket_index , path_to_str(&path.clone().typed(LinkTypes::SnapshotLink)?));
     let _ = create_link(
