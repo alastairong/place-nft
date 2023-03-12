@@ -31,7 +31,7 @@ pub fn get_author_rank(input: GetAuthorRankInput) -> ExternResult<u16> {
     LinkTypes::PlacementLink,
     None,
   )?;
-  debug!("*** get_author_rank() placement_links: {:?}", placement_links);
+  // debug!("*** get_author_rank() placement_links: {:?}", placement_links);
 
   if placement_links.len() == 0 {
     debug!("*** get_author_rank() no placement_links found");
@@ -39,7 +39,7 @@ pub fn get_author_rank(input: GetAuthorRankInput) -> ExternResult<u16> {
   }
 
   placement_links.sort_by(|a, b| b.timestamp.cmp(&a.timestamp)); //newest first
-
+  // debug!("*** get_author_rank() SORTED placement_links: {:?}", placement_links);
   /* For each placement check if its author matchs input ; attribute rank according to the number
    * of placements we had to go through
    */
@@ -47,10 +47,10 @@ pub fn get_author_rank(input: GetAuthorRankInput) -> ExternResult<u16> {
   let mut i = 1;
   debug!("*** get_author_rank() iterating to check author rank");
   for link in placement_links.iter() {
-    let author_bytes = link.tag.clone().into_inner();
-    debug!("*** get_author_rank() author_bytes: {:?}", author_bytes);
+    let author_bytes = link.author.clone().into_inner();
+    // debug!("*** get_author_rank() author_bytes: {:?}", author_bytes);
     let author: HoloHash<Agent> = HoloHash::from_raw_39(author_bytes).unwrap();
-    debug!("*** get_author_rank() author: {:?}", author);
+    // debug!("*** get_author_rank() author: {:?}", author);
     if author == input.author.clone().into() {
       return Ok(i);
     }

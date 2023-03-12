@@ -19,14 +19,16 @@ export function destructurePlacement(placement: Placement): DestructuredPlacemen
     };
   }
 
-  export function snapshotToGrid(imageData: Uint8Array): String[] {
+  export function updateGrid(imageData: Uint8Array, placements: Placement[]): String[] {
     if(imageData.length != Math.floor(128 * 128 / 2)) {
       console.error(`snapshotIntoFrame(${128}) error: invalid imageData length: ` + imageData.length)
       return new Array();
     }
     let grid = new Array(128 * 128);
-    grid.fill("#FFFFFF");
+    // grid.fill("#FFFFFF");
     let i = 0;
+
+    // Render the base snapshot
     for (const packed of imageData) {
       const doublePixel = intoDoublePixel(packed);
       let color1 = COLOR_PALETTE[doublePixel[1]];
@@ -37,6 +39,12 @@ export function destructurePlacement(placement: Placement): DestructuredPlacemen
 
       i += 1;
     }
+    // Apply placements made since that snapshot on top
+    for (const placement of placements) {
+      const { x, y, colorIndex } = destructurePlacement(placement);
+      grid[x + y * 128] = COLOR_PALETTE[colorIndex];
+    }
+
     return grid;
   }
 

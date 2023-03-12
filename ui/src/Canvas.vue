@@ -9,7 +9,7 @@
           v-for="(cell, index) in grid"
           :key="index"
           class="cell"
-          :style="{ color: cell.toString() }"
+          :style="{ backgroundColor: cell.toString() }"
           @click="placePixel(index)"
         ></div>
       </div>
@@ -30,10 +30,10 @@
   import { Interface } from './place_nft/place/interface';
   import { AppAgentClient } from '@holochain/client';
   import { Snapshot, Placement, DestructuredPlacement } from './place_nft/place/types';
-  import { packPlacement, snapshotToGrid, color2index, COLOR_PALETTE } from './place_nft/place/utils';
+  import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/place/utils';
   import '@material/mwc-circular-progress';
-
-  const GAME_START_TIME = 1677789837; // Must be updated to match DNA timestamp
+  // TODO: Placements outside of a snapshot are not currently rendered
+  const GAME_START_TIME = 1678571746; // Must be updated to match DNA timestamp
   
   export default defineComponent({
     data(): { grid: String[]; selectedColor: String; clock: number; currentBucket: number; latestSnapshot: Snapshot | undefined; placementsSinceLatestSnapshot: Array<Placement>; loading: boolean; error: any; timer: any; colors: String[];} {
@@ -51,7 +51,7 @@
       }
     },
     created() {
-      this.timer = setInterval(this.updateData, 5000) // we check for updates every 5 seconds
+      this.timer = setInterval(this.updateData, 10000) // we check for updates every 10 seconds
     }, 
     destroyed() {
       clearInterval(this.timer); // clear timer when component is destroyed
@@ -136,27 +136,27 @@
       // In this function, we only update the bucket once we have a new snapshot. This keeps the bucket
       // in sync with the snapshot, and acts as a flag for having a latest snapshot.
       async updateData() {
-        console.log("Updating data at bucket " + this.currentBucket + "...");
+        console.log("Updating data at bucket " + this.currentBucket + " at " + Date.now());
           // update clock and check if we've moved to a new bucket
           const now = new Date();
           const timeInSeconds = Math.round(now.getTime() / 1000); 
           this.clock = timeInSeconds;
           const bucket = Math.floor((timeInSeconds - GAME_START_TIME) / (60 * 5));
-          if (this.currentBucket < bucket) { // if we've moved to a new bucket
-            try {
-              // See if there's a new snapshot
-              let newSnapshot = await this.happ.getSnapshotAt(bucket);
-              if (newSnapshot) {
-                this.latestSnapshot = newSnapshot;
-                this.placementsSinceLatestSnapshot = await this.happ.getPlacementsAt(bucket);
-                this.currentBucket = bucket;
-              } else {
-                await this.tryPublish();
-              }
-            } catch (e) {
-              console.log(e);
+          // TODO: Make this call conditional so it doesn't always re-pull the latest snapshot
+          this.currentBucket = bucket;
+          try {
+            // See if there's a new snapshot
+            let newSnapshot = await this.happ.getSnapshotAt(bucket);
+            if (newSnapshot) {
+              this.latestSnapshot = newSnapshot;
+              this.placementsSinceLatestSnapshot = await this.happ.getPlacementsAt(bucket);
+              // console.log("Placements since latest snapshot: " + JSON.stringify(this.placementsSinceLatestSnapshot));
+            } else {
+              await this.tryPublish();
             }
-        }
+          } catch (e) {
+            console.log(e);
+          }
       },
 
       async placePixel(index: number) { 
@@ -166,29 +166,31 @@
           y: Math.floor(index / 128),
           colorIndex: color2index(this.selectedColor.toString()),
         }
-        console.log("Checking if already placed at bucket " + this.currentBucket + "...")
+        // console.log("Checking if already placed at bucket " + this.currentBucket + "...")
         const alreadyPlaced = await this.happ.alreadyPlaced(this.clock) // this check also means that if we haven't gotten a snapshot for the new bucket we can't place
         if (!alreadyPlaced) {
           console.log("Placing pixel at bucket " + this.currentBucket + "...")
           const placementAction = await this.happ.placePixel(destructuredPlacement);
           this.placementsSinceLatestSnapshot.push(packPlacement(destructuredPlacement));
+          // this.grid[index] = this.selectedColor; // Update the color of the selected cell in the grid
+          // console.log("grid at index " + index + " is " + this.grid[index]);
         } else {
           console.log("Already placed at bucket " + this.currentBucket + "...")
         }
-        this.grid[index] = this.selectedColor; // Update the color of the selected cell in the grid
-        console.log("grid at index " + index + " is " + this.grid[index]);
       },
 
       async tryPublish() {
         console.log("Calling tryPublish")
-        let rank = await this.happ.getAuthorRank(this.currentBucket);
+        let rank = await this.happ.getAuthorRank(Math.max(this.currentBucket - 1, 0)); // rank is based on actions in the last bucket
         if (rank == 0) {
           rank = 10;
         }
-
-        let secondsInBucket = (this.clock - GAME_START_TIME)/(5 * 60) - (this.currentBucket * (5 * 60)); 
-
-        if (rank <= (secondsInBucket)/10 || secondsInBucket > 150) {
+        console.log("CurrentBucket is " + this.currentBucket)
+        console.log("Rank is " + rank)
+        let secondsInBucket = (this.clock - GAME_START_TIME) - (this.currentBucket * (5 * 60)); 
+        console.log("Seconds in bucket is " + secondsInBucket)
+        if (rank <= Math.floor(secondsInBucket/10) || secondsInBucket > 150) {
+          console.log("Publishing snapshot at bucket " + this.currentBucket + "...")
           const snapshot = await this.happ.publishSnapshotAt(this.currentBucket);
           if (snapshot) {
             this.latestSnapshot = snapshot;
@@ -199,10 +201,24 @@
         }
       },
     },
-
+    // TODO: reset the placements array when the snapshot array is updated?
     watch: {
       latestSnapshot(newSnapshot) {
-        this.grid = snapshotToGrid(newSnapshot.imageData); // unpack grid data
+        this.placementsSinceLatestSnapshot = []; 
+        this.grid = updateGrid(newSnapshot.imageData, []); // unpack grid data
+      },
+
+      placementsSinceLatestSnapshot(newPlacements) {
+        if (newPlacements.len() > 0) {
+          let baseImageData: Uint8Array;
+          if (this.latestSnapshot) {
+            baseImageData = this.latestSnapshot.imageData;
+          } else {
+            baseImageData = new Uint8Array(128 * 128);
+          }
+          
+          this.grid = updateGrid(baseImageData, newPlacements); // unpack grid data
+        }
       },
     },
 

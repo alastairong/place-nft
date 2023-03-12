@@ -9,7 +9,9 @@ pub use crate::snapshot::*;
 pub use crate::double_pixel::*;
 pub use crate::globals::*;
 
+#[derive(Serialize, Deserialize)]
 #[hdk_entry_defs]
+#[serde(tag = "type")]
 #[unit_enum(PlaceEntryTypes)]
 pub enum PlaceEntry {
    #[entry_def(required_validations = 2, visibility = "public")]

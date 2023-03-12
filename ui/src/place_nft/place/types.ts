@@ -48,8 +48,8 @@ export interface DestructuredPlacement {
 }
 
 export interface Snapshot {
-  image_data: Uint8Array; // 2 x 4-bit pixels per u8
-  placement_count: number; // Number of placements in this bucket
+  imageData: Uint8Array; // 2 x 4-bit pixels per u8
+  placementCount: number; // Number of placements in this bucket
   bucketIndex: number; // Number of 'bucket_size_sec' since START.
 }
 
