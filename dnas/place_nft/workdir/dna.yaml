@@ -4,7 +4,7 @@ name: place_nft
 integrity:
   network_seed: ~
   properties: ~
-  origin_time: 1677423474671549
+  origin_time: 1673545422448227
   zomes:
     - name: place_integrity
       hash: ~
