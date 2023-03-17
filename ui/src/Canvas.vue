@@ -33,7 +33,7 @@
   import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/place/utils';
   import '@material/mwc-circular-progress';
   // TODO: Placements outside of a snapshot are not currently rendered
-  const GAME_START_TIME = 1678815290; // Must be updated to match DNA timestamp
+  const GAME_START_TIME = 1679090595; // Must be updated to match DNA timestamp
   
   export default defineComponent({
     data(): { grid: String[]; selectedColor: String; clock: number; currentBucket: number; latestSnapshot: Snapshot | undefined; placementsSinceLatestSnapshot: Array<Placement>; loading: boolean; error: any; timer: any; colors: String[];} {
@@ -217,7 +217,7 @@
       },
 
       placementsSinceLatestSnapshot(newPlacements) {
-        if (newPlacements.len() > 0) {
+          if (newPlacements.length > 0) {
           let baseImageData: Uint8Array;
           if (this.latestSnapshot) {
             baseImageData = this.latestSnapshot.imageData;

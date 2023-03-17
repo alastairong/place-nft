@@ -10,4 +10,3 @@ name = "place_integrity"
 [dependencies]
 hdi = { workspace = true }
 serde = { workspace = true }
-lazy_static = "1.4.0"

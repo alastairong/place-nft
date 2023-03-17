@@ -26,32 +26,31 @@ export function destructurePlacement(placement: Placement): DestructuredPlacemen
     }
     let grid = new Array(128 * 128);
     // grid.fill("#FFFFFF");
+    
     let i = 0;
-
     // Render the base snapshot
-    for (const packed of imageData) {
-      const doublePixel = intoDoublePixel(packed);
-      let color1 = COLOR_PALETTE[doublePixel[1]];
-      let color2 = COLOR_PALETTE[doublePixel[0]];
+    for (const doublePixel of imageData) {
+      const pixelPair = fromDoublePixel(doublePixel);
+      let color1 = COLOR_PALETTE[pixelPair[1]];
+      let color2 = COLOR_PALETTE[pixelPair[0]];
   
       grid[i] = color1; // R
       grid[i + 1] = color2;  // G
 
-      i += 1;
+      i += 2;
     }
     // Apply placements made since that snapshot on top
     for (const placement of placements) {
       const { x, y, colorIndex } = destructurePlacement(placement);
       grid[x + y * 128] = COLOR_PALETTE[colorIndex];
     }
-
     return grid;
   }
 
-  export type DoublePixel = [upper: number, lower: number];
+  export type PixelPair = [upper: number, lower: number];
 
-  function intoDoublePixel(packed: number): DoublePixel {
-    return [Math.floor(packed / 16), packed % 16];
+  function fromDoublePixel(doublePixel: number): PixelPair {
+    return [Math.floor(doublePixel / 16), doublePixel % 16];
   }
 
   export const COLOR_PALETTE = [
