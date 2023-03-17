@@ -74,7 +74,7 @@ pub fn get_snapshot_at(bucket_index: u32) -> ExternResult<Option<Snapshot>> {
 
 pub fn publish_snapshot(snapshot: &Snapshot) -> ExternResult<ActionHash> {
     // Commit new rendering
-    let action_hash = create_entry(PlaceEntry::Snapshot(snapshot.to_owned()))?;
+    let action_hash = create_entry(EntryTypes::Snapshot(snapshot.to_owned()))?;
     let entry_hash = hash_entry(snapshot)?;
     // Link to current bucket
     let path = bucket_index_to_path(snapshot.bucket_index);

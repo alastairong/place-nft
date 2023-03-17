@@ -19,7 +19,7 @@ pub fn place_pixel(input: DestructuredPlacement) -> ExternResult<ActionHash> {
    let placement = Placement::from_destructured(input);
    let path = get_path(now);
    // Commit
-   let action_hash = create_entry(PlaceEntry::Placement(placement.clone()))?;
+   let action_hash = create_entry(EntryTypes::Placement(placement.clone()))?;
    // Link to current bucket path
    let entry_hash = hash_entry(placement)?;
    debug!("*** place_pixel() path: {}", path_to_str(&path.clone().typed(LinkTypes::PlacementLink)?));
@@ -158,7 +158,7 @@ pub fn place_pixel_at(input: PlaceAtInput) -> ExternResult<ActionHash> {
 
     let path = get_path(time);
     // Commit
-    let action_hash = create_entry(PlaceEntry::Placement(placement.clone()))?;
+    let action_hash = create_entry(EntryTypes::Placement(placement.clone()))?;
     // Link to current bucket path
     let entry_hash = hash_entry(placement)?;
     debug!("*** place_pixel() path: {}", path_to_str(&path.clone().typed(LinkTypes::PlacementLink)?));

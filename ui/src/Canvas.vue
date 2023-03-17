@@ -26,14 +26,14 @@
   </template>
   
   <script lang="ts">
-  import { defineComponent, inject, ComputedRef } from 'vue';
+  import { defineComponent, inject, toRaw, ComputedRef } from 'vue';
   import { Interface } from './place_nft/place/interface';
   import { AppAgentClient } from '@holochain/client';
-  import { Snapshot, Placement, DestructuredPlacement } from './place_nft/place/types';
+  import { Snapshot, Placement, DestructuredPlacement, PlaceSignal } from './place_nft/place/types';
   import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/place/utils';
   import '@material/mwc-circular-progress';
   // TODO: Placements outside of a snapshot are not currently rendered
-  const GAME_START_TIME = 1678571746; // Must be updated to match DNA timestamp
+  const GAME_START_TIME = 1678815290; // Must be updated to match DNA timestamp
   
   export default defineComponent({
     data(): { grid: String[]; selectedColor: String; clock: number; currentBucket: number; latestSnapshot: Snapshot | undefined; placementsSinceLatestSnapshot: Array<Placement>; loading: boolean; error: any; timer: any; colors: String[];} {
@@ -59,6 +59,14 @@
     async mounted() {
       this.calculateCurrentBucket();
       await this.loadInitialData();
+      toRaw(this.client).on('signal', signal => {
+        if (signal.zome_name !== 'posts') return; 
+        const payload = signal.payload as PlaceSignal;
+        if (payload.type !== 'EntryCreated') return;
+        if (payload.app_entry.type !== 'Placement') return;
+        console.log("RECEIVED: " + payload.app_entry);
+        if (this.placementsSinceLatestSnapshot) this.placementsSinceLatestSnapshot.push(payload.app_entry);
+      });
     },
     methods: {
       calculateCurrentBucket() {
@@ -226,6 +234,7 @@
       const client = (inject('client') as ComputedRef<AppAgentClient>).value;
       const placeInterface = new Interface(client);
       return {
+        client,
         happ: placeInterface,
       };
     },

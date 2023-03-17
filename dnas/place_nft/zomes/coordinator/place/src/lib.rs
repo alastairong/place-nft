@@ -20,7 +20,7 @@ pub fn init(_: ()) -> ExternResult<InitCallbackResult> {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum Signal {
-    EntryCreated { action: SignedActionHashed, app_entry: PlaceEntry },
+    EntryCreated { action: SignedActionHashed, app_entry: EntryTypes },
 }
 
 /// Whenever an action is committed, we emit a signal to the UI elements to reactively update them
@@ -50,9 +50,9 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
     }
 }
 
-fn get_entry_for_action(action_hash: &ActionHash) -> ExternResult<Option<PlaceEntry>> {
-    let record = match get_details(action_hash.clone(), GetOptions::default())? {
-        Some(Details::Record(record_details)) => record_details.record,
+fn get_entry_for_action(action_hash: &ActionHash) -> ExternResult<Option<EntryTypes>> {
+    let record = match get(action_hash.clone(), GetOptions::default())? {
+        Some(record) => record,
         _ => {
             return Ok(None);
         }
