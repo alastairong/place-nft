@@ -1,17 +1,17 @@
 [package]
-name = "place"
+name = "nft"
 version = "0.0.1"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-name = "place"
+name = "nft"
 
 [dependencies]
 hdk = { workspace = true }
 
 serde = { workspace = true }
 
-place_integrity = { workspace = true } 
+nft_integrity = { workspace = true } 
 
 zome_utils = { workspace = true }

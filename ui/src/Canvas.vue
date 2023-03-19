@@ -4,28 +4,34 @@
     </div>
   
     <div class="container" v-else style="display: flex; flex-direction: column">
-      <div class="grid">
-        <div
-          v-for="(cell, index) in grid"
-          :key="index"
-          class="cell"
-          :style="{ backgroundColor: cell.toString() }"
-          @click="placePixel(index)"
-        ></div>
-      </div>
-      <div class="color-picker">
-        <div v-for="color in colors" :key="color.toString()"
-            class="color-swatch"
-            :style="{ backgroundColor: color.toString() }"
-            @click="selectedColor = color"
-            :class="{ active: color === selectedColor }">
+      <div v-if="!finished">
+        <div class="grid">
+          <div
+            v-for="(cell, index) in grid"
+            :key="index"
+            class="cell"
+            :style="{ backgroundColor: cell.toString() }"
+            @click="placePixel(index)"
+          ></div>
         </div>
+        <div class="color-picker">
+          <div v-for="color in colors" :key="color.toString()"
+              class="color-swatch"
+              :style="{ backgroundColor: color.toString() }"
+              @click="selectedColor = color"
+              :class="{ active: color === selectedColor }">
+          </div>
+        </div>
+      </div>
+      <div v-else>
+        <Minter></Minter>
       </div>
     </div>
   
   </template>
   
   <script lang="ts">
+  import Minter from './Minter.vue';
   import { defineComponent, inject, toRaw, ComputedRef } from 'vue';
   import { Interface } from './place_nft/place/interface';
   import { AppAgentClient } from '@holochain/client';
@@ -36,7 +42,10 @@
   const GAME_START_TIME = 1679090595; // Must be updated to match DNA timestamp
   
   export default defineComponent({
-    data(): { grid: String[]; selectedColor: String; clock: number; currentBucket: number; latestSnapshot: Snapshot | undefined; placementsSinceLatestSnapshot: Array<Placement>; loading: boolean; error: any; timer: any; colors: String[];} {
+    components: {
+      Minter
+    },
+    data(): { grid: String[]; selectedColor: String; clock: number; currentBucket: number; latestSnapshot: Snapshot | undefined; placementsSinceLatestSnapshot: Array<Placement>; loading: boolean; error: any; timer: any; colors: String[]; finished: boolean} {
       return {
         grid: Array(16384).fill("#ffffff"), // Create a grid of 100x100 cells and set their background color to white
         selectedColor: "#ffffff", // Initialize the selected color to white
@@ -47,7 +56,8 @@
         loading: true,
         error: undefined,
         timer: undefined,
-        colors: COLOR_PALETTE
+        colors: COLOR_PALETTE,
+        finished: Date.now() > GAME_START_TIME + 24 * 60 * 60
       }
     },
     created() {
