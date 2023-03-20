@@ -13,7 +13,7 @@ type Uint8Array = Vec<DoublePixel>;
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
    pub image_data: Uint8Array, // 2 x 4-bit pixels per u8
-   pub placement_count: u32, // Number of placements in this bucket
+   pub placement_count: u32, // Cumulative number of placements in this snapshot
    pub bucket_index: u32, // Number of 'bucket_size_sec' since START.
 }
 

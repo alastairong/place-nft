@@ -4,26 +4,25 @@
     </div>
   
     <div class="container" v-else style="display: flex; flex-direction: column">
-      <div v-if="!finished">
-        <div class="grid">
-          <div
-            v-for="(cell, index) in grid"
-            :key="index"
-            class="cell"
-            :style="{ backgroundColor: cell.toString() }"
-            @click="placePixel(index)"
-          ></div>
-        </div>
-        <div class="color-picker">
-          <div v-for="color in colors" :key="color.toString()"
-              class="color-swatch"
-              :style="{ backgroundColor: color.toString() }"
-              @click="selectedColor = color"
-              :class="{ active: color === selectedColor }">
-          </div>
+      <div class="grid">
+        <div
+          v-for="(cell, index) in grid"
+          :key="index"
+          class="cell"
+          :style="{ backgroundColor: cell.toString() }"
+          @click="placePixel(index)"
+        ></div>
+      </div>
+      <div class="color-picker">
+        <div v-for="color in colors" :key="color.toString()"
+            class="color-swatch"
+            :style="{ backgroundColor: color.toString() }"
+            @click="selectedColor = color"
+            :class="{ active: color === selectedColor }">
         </div>
       </div>
-      <div v-else>
+      <div v-if="finished">
+        <div class="overlay"></div> <!--if this doesn't cover enough, move this to top level and add v-if condition -->
         <Minter></Minter>
       </div>
     </div>
@@ -242,10 +241,10 @@
 
     setup() {
       const client = (inject('client') as ComputedRef<AppAgentClient>).value;
-      const placeInterface = new Interface(client);
+      const happ = (inject('placeInterface') as ComputedRef<Interface>).value;
       return {
         client,
-        happ: placeInterface,
+        happ,
       };
     },
   })
@@ -293,6 +292,16 @@
       padding: 0; /* remove any padding */
       border: none; /* remove any border */
       box-shadow: 0 0 0 1px #000; /* add a black border effect */
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
     }
   </style>
   
