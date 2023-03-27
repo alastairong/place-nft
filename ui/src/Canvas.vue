@@ -32,10 +32,10 @@
   <script lang="ts">
   import Minter from './Minter.vue';
   import { defineComponent, inject, toRaw, ComputedRef } from 'vue';
-  import { Interface } from './place_nft/place/interface';
+  import { Interface } from './place_nft/interface';
   import { AppAgentClient } from '@holochain/client';
-  import { Snapshot, Placement, DestructuredPlacement, PlaceSignal } from './place_nft/place/types';
-  import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/place/utils';
+  import { Snapshot, Placement, DestructuredPlacement, PlaceSignal } from './place_nft/types';
+  import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/utils';
   import '@material/mwc-circular-progress';
   // TODO: Placements outside of a snapshot are not currently rendered
   const GAME_START_TIME = 1679090595; // Must be updated to match DNA timestamp
