@@ -125,12 +125,12 @@
             this.isConnected = false
             return
           } else {
-            this.provider?.on('accountsChanged', this.handleMetaMaskApproval)
+            this.provider?.on?.('accountsChanged', this.handleMetaMaskApproval)
           }
 
           try {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-assignment
-            await this.provider?.request({ method: 'eth_requestAccounts' }) // this is done to connect
+            await this.provider?.request?.({ method: 'eth_requestAccounts' }) // this is done to connect
           } catch (error) {
             console.log(error)
           }
@@ -138,7 +138,7 @@
         } catch (error) {}
       },
 
-      handleMetaMaskApproval(accounts: string[]): void {
+      handleMetaMaskApproval(accounts: any): void {
         if (!accounts[0]) {
           this.isConnected = false
         } 
@@ -209,7 +209,7 @@
         
         try {
           // Make signing request via MetaMask
-          const result: string | unknown = await this.provider?.request(signatureRequest)
+          const result: string | unknown = await this.provider?.request?.(signatureRequest)
       
           if (isString(result)) {
             /* eslint-disable @typescript-eslint/no-magic-numbers */
