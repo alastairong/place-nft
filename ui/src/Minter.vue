@@ -24,7 +24,8 @@
             </div>
             <div v-else>
               <p>Metamask is connected</p>
-              <button @click="this.step=2">Start</button>
+              <button @click="step=2">Start</button>
+            </div>
           </div>
           <div v-else-if="step === 2">
             <p>Sign with the ethereum key you would like to use to mint the NFT</p>
@@ -42,6 +43,7 @@
             <p>Transaction Hash: {{ txhash }}</p>
             <button @click="goToUrl">View NFT</button>
           </div>
+        
         </div>
       </div>
     </div>
@@ -62,7 +64,7 @@
 
   // Main page logic
   export default defineComponent({
-    data(): { loading: boolean; step: number, error: any, txhash: string, NFTimage: any, isInstalled: boolean, isConnected: boolean, ethereumAddress: string, NFTAuthor: string } {
+    data(): { loading: boolean; step: number, error: any, txhash: string, NFTimage: any, isInstalled: boolean, isConnected: boolean, ethereumAddress: string, NFTAuthor: string, provider: ExternalProvider | null } {
       return {
         loading: true,
         step: 1,
@@ -73,6 +75,7 @@
         isConnected: false,
         ethereumAddress: "",
         NFTAuthor: "",
+        provider: null
       }
     },
     async mounted() {
@@ -114,20 +117,20 @@
         try {
           this.isConnected = true
 
-          const provider: ExternalProvider | null = await detectEthereumProvider({
+          this.provider = await detectEthereumProvider({
             mustBeMetaMask: true
           })
 
-          if (!provider) {
+          if (this.provider === null || this.provider === undefined) {
             this.isConnected = false
             return
           } else {
-            provider.on('accountsChanged', this.handleMetaMaskApproval)
+            this.provider?.on('accountsChanged', this.handleMetaMaskApproval)
           }
 
           try {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-assignment
-            await provider.request({ method: 'eth_requestAccounts' }) // this is done to connect
+            await this.provider?.request({ method: 'eth_requestAccounts' }) // this is done to connect
           } catch (error) {
             console.log(error)
           }
@@ -206,7 +209,7 @@
         
         try {
           // Make signing request via MetaMask
-          const result: string | unknown = await provider?.request(signatureRequest)
+          const result: string | unknown = await this.provider?.request(signatureRequest)
       
           if (isString(result)) {
             /* eslint-disable @typescript-eslint/no-magic-numbers */

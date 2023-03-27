@@ -13,7 +13,7 @@
 <script lang="ts">
 import { defineComponent, computed } from 'vue';
 import { AppWebsocket, ActionHash, AppAgentClient, AppAgentWebsocket } from '@holochain/client';
-import { Interface } from './place_nft/place/interface';
+import { Interface } from './place_nft/interface';
 import '@material/mwc-circular-progress';
 import Canvas from './Canvas.vue';
 
