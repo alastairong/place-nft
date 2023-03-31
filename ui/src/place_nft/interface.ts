@@ -87,25 +87,25 @@ export class Interface {
     }
 
     async getNFTimage(): Promise<boolean> {
-        // return this.client.callZome({
-        //     cap_secret: null,
-        //     role_name: 'place_nft',
-        //     zome_name: 'nft',
-        //     fn_name: 'get_NFT_image',
-        //     payload: null,
-        // });
+        return this.client.callZome({
+            cap_secret: null,
+            role_name: 'place_nft',
+            zome_name: 'nft',
+            fn_name: 'get_NFT_image',
+            payload: null,
+        });
         console.log("Calling getNFTimage");
         return true
     }
 
     async linkEthereumAddress(signature: string): Promise<boolean> {
-        // return this.client.callZome({
-        //     cap_secret: null,
-        //     role_name: 'place_nft',
-        //     zome_name: 'nft',
-        //     fn_name: 'link_ethereum_address',
-        //     payload: signature,
-        // });
+        return this.client.callZome({
+            cap_secret: null,
+            role_name: 'place_nft',
+            zome_name: 'nft',
+            fn_name: 'link_ethereum_address',
+            payload: signature,
+        });
 
         console.log("Calling linkEthereumAddress");
         return true

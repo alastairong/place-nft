@@ -3,6 +3,7 @@ use hdi::prelude::*;
 pub mod links;
 pub mod badge;
 pub mod minter;
+mod validation;
 
 #[derive(Serialize, Deserialize)]
 #[hdk_entry_defs]
@@ -24,10 +25,3 @@ pub fn genesis_self_check(_data: GenesisSelfCheckData) -> ExternResult<ValidateC
     Ok(ValidateCallbackResult::Valid)
 }
 
-///
-#[hdk_extern]
-fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
-  match op {
-    _ => Ok(ValidateCallbackResult::Valid),
-  }
-}
