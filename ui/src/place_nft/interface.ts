@@ -86,7 +86,7 @@ export class Interface {
         });
     }
 
-    async getNFTimage(): Promise<boolean> {
+    async getNFTimage(): Promise<any> { // TODO: Create a type for image
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
@@ -94,11 +94,9 @@ export class Interface {
             fn_name: 'get_NFT_image',
             payload: null,
         });
-        console.log("Calling getNFTimage");
-        return true
     }
 
-    async linkEthereumAddress(signature: string): Promise<boolean> {
+    async linkEthereumAddress(signature: string): Promise<ActionHash> {
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
@@ -106,8 +104,5 @@ export class Interface {
             fn_name: 'link_ethereum_address',
             payload: signature,
         });
-
-        console.log("Calling linkEthereumAddress");
-        return true
     }
 }

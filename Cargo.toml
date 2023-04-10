@@ -12,6 +12,10 @@ hdi = "=0.2.1"
 hdk = "=0.1.1"
 serde = "1"
 zome_utils = { git = "https://github.com/alastairong/zome-utils", branch = "beta.1.1" }
+image = "0.24.6"
+imageproc = "0.23.0"
+rusttype = "0.9.3"
+
 
 [workspace.dependencies.place]
 path = "dnas/place_nft/zomes/coordinator/place"

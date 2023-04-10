@@ -96,8 +96,8 @@
       async signWithEthereum() {
         const signature = await this.signNFTauthor()// Sign Holochain key with Metamask
         if (signature) {
-          const isSigned = await this.happ.linkEthereumAddress(signature)// Commit signature and Eth address to Holochain
-          if (isSigned) {
+          const addressLink = await this.happ.linkEthereumAddress(signature)// Commit signature and Eth address to Holochain
+          if (!!addressLink) {
             this.step++
           }
         }

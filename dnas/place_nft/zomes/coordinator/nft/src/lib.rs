@@ -7,51 +7,36 @@ pub fn init(_: ()) -> ExternResult<InitCallbackResult> {
 }
 
 #[hdk_extern]
-pub fn get_NFT_image(_:()) -> ExternResult<ActionHash> {
-   debug!("*** place_pixel() CALLED: {:?}", input);
-   std::panic::set_hook(Box::new(zome_panic_hook));
-   // Make sure not already placed
-   let now = now();
-   if already_placed(now)? {
-      warn!("Pixel already placed for current bucket");
-      return error("Pixel placed for current bucket")
-   }
-   // Prepare placement
-   let placement = Placement::from_destructured(input);
-   let path = get_path(now);
-   // Commit
-   let action_hash = create_entry(EntryTypes::Placement(placement.clone()))?;
-   // Link to current bucket path
-   let entry_hash = hash_entry(placement)?;
-   debug!("*** place_pixel() path: {}", path_to_str(&path.clone().typed(LinkTypes::PlacementLink)?));
-   let _ = create_link(
-      path.path_entry_hash()?,
-      entry_hash,
-      LinkTypes::PlacementLink,
-      LinkTag::from(()),
-   )?;
-   // Done
-   Ok(action_hash)
+pub fn get_NFT_image(_:()) -> ExternResult<ByteArray> {
+    // Check if the image entry exists (how does the zome call look this up? Is there an anchor?)
+    // If it does, return the image
+    // If it doesn't, generate the image and commit
+    // return commit
+    let image = ByteArray::from(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]); // TBD
+    Ok(image)
 }
 
-
-async getNFTimage(): Promise<boolean> {
-    return this.client.callZome({
-        cap_secret: null,
-        role_name: 'place_nft',
-        zome_name: 'nft',
-        fn_name: 'get_NFT_image',
-        payload: null,
-    });
-    console.log("Calling getNFTimage");
-    return true
+pub struct GenerateHrlInput {
+    badge: ActionHash,
+    eth_address: String
 }
 
-async linkEthereumAddress(signature: string): Promise<boolean> {
-    return this.client.callZome({
-        cap_secret: null,
-        role_name: 'place_nft',
-        zome_name: 'nft',
-        fn_name: 'link_ethereum_address',
-        payload: signature,
-    });
+#[hdk_extern]
+pub fn generate_hrl(input: GenerateHrlInput) -> ExternResult<ActionHash> {
+    
+    if let Some(Record) = get(input.badge, Default::default())? {
+        // Get action_hash
+        // Check that user has not created a link already?
+        // Create links in each direction
+    } else {
+        Err("Badge doesn't exist")
+    }
+
+    Ok()
+}
+
+fn publish_image(image: Badge) -> ExternResult<ActionHash> {
+    let action_hash = create_entry(EntryTypes::Badge(image))?;
+    let entry_hash = hash_entry(image)?;
+    Ok(action_hash)
+}

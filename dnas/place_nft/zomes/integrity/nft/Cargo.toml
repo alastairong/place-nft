@@ -10,3 +10,7 @@ name = "nft_integrity"
 [dependencies]
 hdi = { workspace = true }
 serde = { workspace = true }
+image = { workspace = true }
+imageproc = { workspace = true }
+rusttype = { workspace = true }
+place_integrity = { workspace = true }

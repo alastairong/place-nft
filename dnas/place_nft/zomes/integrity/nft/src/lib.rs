@@ -5,6 +5,9 @@ pub mod badge;
 pub mod minter;
 mod validation;
 
+pub use crate::badge::*;
+pub use crate::minter::*;
+
 #[derive(Serialize, Deserialize)]
 #[hdk_entry_defs]
 #[serde(tag = "type")]
@@ -12,8 +15,8 @@ mod validation;
 pub enum EntryTypes {
    #[entry_def(required_validations = 2, visibility = "public")]
    Badge(Badge),
-   #[entry_def(required_validations = 2, visibility = "public")]
-   Minter(Minter),
+//    #[entry_def(required_validations = 2, visibility = "public")]
+//    Minter(Minter),
 }
 
 
