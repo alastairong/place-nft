@@ -14,23 +14,37 @@ fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
   }
 }
 
+// Check if the badge author has placed a placement
 fn validate_create_entry(
   signed_hashed: SignedHashed<EntryCreationAction>,
   entry: Entry,
 ) -> ExternResult<ValidateCallbackResult> {
-  let author = signed_hashed.hashed.content.author();
-  let filter: ChainFilter; // TODO - chainfilter
+  let entry_hash = hash_entry(entry)?;
+  match must_get_entry(entry_hash) {
+    Ok(_) => {return Ok(ValidateCallbackResult::Invalid("Entry already exists".to_string()))}, // Is this always going to fail because it runs after commit?
+    Err(_) => {
+      // Get all of the author's actions
+      let author = signed_hashed.hashed.content.author();
+      let action_hash = signed_hashed.as_hash().clone();
+      let filter = ChainFilter::new(action_hash);
+      let author_actions = must_get_agent_activity(author.clone(), filter)?;
 
-  let author_actions = must_get_agent_activity(author.clone(), filter)?;
-
-  for action in author_actions.into_iter() {
-    // check if the action is a CreateEntry
-    // if a CreateEntry, check if the entry is a placement
-    if entry_type == EntryTypes::Placement {
-      return Ok(ValidateCallbackResult::Valid);
+      for registered_action in author_actions.into_iter() {
+        match registered_action.action.hashed.action_type() {
+          // If the action creates an entry, check if the entry is a placement
+          ActionType::Create => {
+            //   let entry = registered_action.action.hashed.content;
+            //   if entry == EntryTypes::Placement {
+            //     // If at least one entry is a placement validation will return true
+            //   }
+            continue
+          },
+          _ => continue,
+        }
+      }
+      Ok(ValidateCallbackResult::Invalid("Badge creator must have placed a placement".to_string()))
     }
   }
-  Ok(ValidateCallbackResult::Invalid("Badge creator must have placed a placement".to_string()))
 }
 
 pub fn validate_create_link(

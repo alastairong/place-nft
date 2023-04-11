@@ -13,7 +13,7 @@ pub use crate::minter::*;
 #[serde(tag = "type")]
 #[unit_enum(EntryTypesTypes)]
 pub enum EntryTypes {
-   #[entry_def(required_validations = 2, visibility = "public")]
+   #[entry_def(required_validations = 2, visibility = "public", cache_at_agent_activity = true)]
    Badge(Badge),
 //    #[entry_def(required_validations = 2, visibility = "public")]
 //    Minter(Minter),
