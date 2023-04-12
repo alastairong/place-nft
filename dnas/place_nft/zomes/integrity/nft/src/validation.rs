@@ -1,6 +1,16 @@
 use hdi::prelude::*;
 use crate::links::LinkTypes;
-use place_integrity::EntryTypes;
+
+/* Validation Rules
+1. Only 1 badge per agent
+2. Only 1 HRL per badge
+3. Only 1 badge per HRL
+4. Badge must be created by the same agent as the HRL
+5. HRL must be based on the same ETH address as the badge
+6. Badge creator must have placed a placement
+ */
+
+
 
 ///
 #[hdk_extern]
@@ -58,7 +68,9 @@ pub fn validate_create_link(
   if hrl_link_type == create_link.hashed.link_type {
     let link_author = create_link.hashed.content.author;
     let target_action_hash = create_link.hashed.content.target_address.into_action_hash().unwrap();
-    let target_author = must_get_action(target_action_hash)?.hashed.content.author();
+    
+    let target_action = must_get_action(target_action_hash)?;
+    let target_author = target_action.hashed.content.author();
     if target_author == &link_author {
       Ok(ValidateCallbackResult::Valid)
     } else {

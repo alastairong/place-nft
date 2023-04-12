@@ -12,3 +12,4 @@ hdk = { workspace = true }
 serde = { workspace = true }
 nft_integrity = { workspace = true } 
 zome_utils = { workspace = true }
+place_integrity = { workspace = true } 

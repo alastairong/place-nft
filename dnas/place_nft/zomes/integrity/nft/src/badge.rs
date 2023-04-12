@@ -26,11 +26,13 @@ const TEMPLATE_DATA: &[u8] = include_bytes!("../template.png");
 #[derive(Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Badge {
-   pub image_data: Vec<u8>, 
+   pub image_data: Vec<u8>,
+   pub eth_address: String,
+   pub eth_signed_contents: String,
 }
 
 impl Badge {
-    pub fn new(final_snapshot: Snapshot, placement_count: u32, author: &str) -> Self {
+    pub fn new(final_snapshot: Snapshot, placement_count: u32, author: &str, eth_address: String, eth_signed_contents: String) -> Self {
       let mut img = image::load_from_memory(TEMPLATE_DATA).unwrap().to_rgba8();
 
       // apply the snapshot image to the template output buffer
@@ -44,7 +46,9 @@ impl Badge {
       img = write_author_name(author, &font, img);
 
       Self {
-         image_data: img.into_raw()
+         image_data: img.into_raw(),
+         eth_address,
+         eth_signed_contents, // we will check this in the validation
       }
     }
 }
