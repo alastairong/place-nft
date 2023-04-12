@@ -1,5 +1,5 @@
 use hdk::prelude::*;
-use nft_integrity::Badge;
+use nft_integrity::{Badge, links::HRLtoBadgeLink};
 use place_integrity::Snapshot;
 
 /// Called the first time a zome call is made to the cell containing this zome
@@ -48,7 +48,24 @@ fn generate_hrl(input: GenerateHrlInput) -> ExternResult<ActionHash> {
         // Get entry_hash
         // Check that user has not created a link already?
         // Calculate anchor from hash(entry_hash, eth_address)
-        // Create links in each direction
+
+        let hrl: String = input.badge.to_string().push_str(&input.eth_address);
+        let hrl_anchor = get_anchor_typed_path(&hrl);
+        // Create link from HRL to badge
+        create_link(
+            hrl_anchor.path_entry_hash()?, // use hrl as anchor
+            input.badge,         // use entry hash as target
+            HRLtoBadgeLink::link_type(),
+            HRLtoBadgeLink::link_tag(),
+        )?;
+
+        // Create link from badge to HRL
+        create_link(
+            input.badge, // use host agent pubkey as base
+            hrl_anchor.path_entry_hash()?,         // use entry hash as target
+            BadgetoHRLLink::link_type(),
+            BadgetoHRLLink::link_tag(),
+        )?;
     } else {
         Err("Badge doesn't exist")
     }
@@ -60,4 +77,10 @@ fn publish_badge(badge: Badge) -> ExternResult<ActionHash> {
     let action_hash = create_entry(EntryTypes::Badge(badge))?;
     let entry_hash = hash_entry(badge)?;
     Ok(action_hash)
+}
+
+fn get_anchor_typed_path(anchor: &str) -> HhaResult<TypedPath> {
+    let typed_path = Path::from(anchor).typed(RootLink::link_type())?;
+    typed_path.ensure()?;
+    Ok(typed_path)
 }
