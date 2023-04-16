@@ -43,11 +43,11 @@ fn validate_create_entry(
         match registered_action.action.hashed.action_type() {
           // If the action creates an entry, check if the entry is a placement
           ActionType::Create => {
-            //   let entry = registered_action.action.hashed.content;
-            //   if entry == EntryTypes::Placement {
-            //     // If at least one entry is a placement validation will return true
-            //   }
-            continue
+            let placement_app_entry_type = AppEntryDef::new(0.into(), 0.into(), EntryVisibility::Public);
+            let entry_type = registered_action.action.hashed.content.entry_type().unwrap().clone();
+            if entry_type == EntryType::App(placement_app_entry_type) {
+              return Ok(ValidateCallbackResult::Valid)
+            }
           },
           _ => continue,
         }

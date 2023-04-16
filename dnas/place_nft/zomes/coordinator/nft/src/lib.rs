@@ -14,14 +14,15 @@ fn get_badge(_: ()) -> ExternResult<Vec<u8>> {
     
     // Search if they already have committed their badge. It should be on their chain
     // If it does, return the image
-    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(AppEntryName(Badge))) {
-        let badge_record = records[0]; // Chain should not have more than one badge anyway so just discard the rest in this POC
-        let badge_result = badge_record.entry.to_app_option()
+    let ZomeInfo {id, ..} = zome_info()?; // There's only 1 app entry def in this zome
+    let badge_app_entry_type = AppEntryDef::new(0.into(), id, EntryVisibility::Public);
+    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(EntryType::App(badge_app_entry_type.clone()))) {
+        let badge_result = records[0].entry.to_app_option() // Chain should not have more than one badge anyway so just discard the rest in this POC
             .map_err(|err| wasm_error!(WasmErrorInner::Guest(
                 err.into()
             )));
         
-        let badge = match badge_result {
+        let badge: Badge = match badge_result {
             Ok(Some(badge)) => badge,
             Ok(None) => return Err(wasm_error!(WasmErrorInner::Guest(
                 "Something went wrong".into()
@@ -37,21 +38,54 @@ fn get_badge(_: ()) -> ExternResult<Vec<u8>> {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]
+pub struct GenerateBadgeInput {
+    eth_address: String,
+    eth_signed_contents: String,
+}
+
 #[hdk_extern]
-fn generate_badge(_: ()) -> ExternResult<ActionHash> {
+fn generate_badge(input: GenerateBadgeInput) -> ExternResult<ActionHash> {
     // Get final snapshot
-    let final_bucket: u32 = 24 * 12; // 12 buckets per hour and 24 hours in this game 
-    let final_snapshot: Snapshot = call(None, "place", "get_snapshot_at", None, final_bucket)?;
+    let final_bucket: u32 = 24 * 12; // 12 buckets per hour and 24 hours in this game
+
+    let final_snapshot_result: Result<Snapshot, WasmError> = call(
+        CallTargetCell::Local,
+        ZomeName("place".into()),
+        FunctionName("get_snapshot_at".into()),
+        None,
+        final_bucket,
+    )
+    .and_then(|snapshot_call_result| match snapshot_call_result {
+        ZomeCallResponse::Ok(response) => response
+            .decode()
+            .map_err(|err| wasm_error!(WasmErrorInner::Guest(err.into()))),
+        _ => {
+            error!(
+                "Place zome returned error when fetching final snapshot: {:?} \n",
+                snapshot_call_result
+            );
+            Err(wasm_error!(WasmErrorInner::Guest("Error fetching final snapshot".into())))
+        }
+    })
+    .map_err(|e| {
+        error!("Failed to call Place zome to fetch snapshot: {:?}", e);
+        wasm_error!(WasmErrorInner::Guest("Error calling Place zome".into()))
+    });
+
+    let final_snapshot = final_snapshot_result?;
+    debug!("Final snapshot: {:?}", final_snapshot);
     
     // And count number of placements this user had and generate badge
-    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(EntryType::App(AppEntryName(Placement)))) {
+    let placement_app_entry_type = AppEntryDef::new(0.into(), 0.into(), EntryVisibility::Public); 
+    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(EntryType::App(placement_app_entry_type))) {
         if records.len() == 0 {
             Err(wasm_error!(WasmErrorInner::Guest(
                 "Only users who have placed a placement can generate a badge".into()
             )))
         } else {
             let author = agent_info()?.agent_latest_pubkey;
-            let badge = Badge::new(final_snapshot, records.len() as u32, author.to_string());
+            let badge = Badge::new(final_snapshot, records.len() as u32, &author.to_string(), input.eth_address, input.eth_signed_contents);
             let action_hash = publish_badge(badge)?;
             Ok(action_hash)
         }
@@ -64,31 +98,44 @@ fn generate_badge(_: ()) -> ExternResult<ActionHash> {
 
 #[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]
 pub struct GenerateHrlInput {
-    badge: ActionHash,
+    badge_action: ActionHash,
 }
 
 #[hdk_extern]
 fn generate_hrl(input: GenerateHrlInput) -> ExternResult<()> {
     
-    if let Some(Record) = get(input.badge, Default::default())? { // Confirms that this badge exists
-        // Fetch info for HRL
-        let badge: Badge = Record.entry.to_app_option(Badge)?.unwrap();
+    if let Some(record) = get(input.badge_action.clone(), Default::default())? { // Confirms that this badge exists
+        
+        // Extract info for HRL
+        let badge_result = record.entry.to_app_option()
+            .map_err(|err| wasm_error!(WasmErrorInner::Guest(
+                err.into()
+            )));
+        
+        let badge: Badge = match badge_result {
+            Ok(Some(badge)) => badge,
+            Ok(None) => return Err(wasm_error!(WasmErrorInner::Guest(
+                "Something went wrong".into()
+            ))),
+            Err(err) => return Err(err),
+        };
+
         let eth_address = badge.eth_address;
        
-        let hrl: String = input.badge.to_string();
+        let mut hrl: String = input.badge_action.to_string();
         hrl.push_str(&eth_address); // In future this should be a hash so it can't be reverse engineered        
         let hrl_anchor = get_anchor_typed_path(&hrl)?;
         // Create link from HRL to badge
         create_link(
             hrl_anchor.path_entry_hash()?, // use hrl as anchor
-            input.badge,         // use entry hash as target
+            input.badge_action.clone(),         // use entry hash as target
             links::HRLtoBadgeLink::link_type(),
             links::HRLtoBadgeLink::link_tag(),
         )?;
 
         // Create link from badge to HRL
         create_link(
-            input.badge, // use host agent pubkey as base
+            input.badge_action.clone(), // use host agent pubkey as base
             hrl_anchor.path_entry_hash()?,         // use entry hash as target
             links::BadgetoHRLLink::link_type(),
             links::BadgetoHRLLink::link_tag(),
@@ -102,8 +149,8 @@ fn generate_hrl(input: GenerateHrlInput) -> ExternResult<()> {
 }
 
 fn publish_badge(badge: Badge) -> ExternResult<ActionHash> {
-    let action_hash = create_entry(EntryTypes::Badge(badge))?;
-    let entry_hash = hash_entry(badge)?;
+    let action_hash = create_entry(EntryTypes::Badge(badge.clone()))?;
+    let _entry_hash = hash_entry(badge)?;
     Ok(action_hash)
 }
 
