@@ -1,6 +1,7 @@
 use hdk::prelude::*;
 use nft_integrity::*;
 use place_integrity::Snapshot;
+use place_integrity::EntryTypesTypes as PlaceEntryTypes;
 
 /// Called the first time a zome call is made to the cell containing this zome
 #[hdk_extern]
@@ -14,9 +15,9 @@ fn get_badge(_: ()) -> ExternResult<Vec<u8>> {
     
     // Search if they already have committed their badge. It should be on their chain
     // If it does, return the image
-    let ZomeInfo {id, ..} = zome_info()?; // There's only 1 app entry def in this zome
-    let badge_app_entry_type = AppEntryDef::new(0.into(), id, EntryVisibility::Public);
-    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(EntryType::App(badge_app_entry_type.clone()))) {
+    // let ZomeInfo {id, ..} = zome_info()?; // There's only 1 app entry def in this zome
+    // let badge_app_entry_type = AppEntryDef::new(0.into(), id, EntryVisibility::Public);
+    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(EntryTypesTypes::Badge.try_into()?)) {
         let badge_result = records[0].entry.to_app_option() // Chain should not have more than one badge anyway so just discard the rest in this POC
             .map_err(|err| wasm_error!(WasmErrorInner::Guest(
                 err.into()
@@ -77,8 +78,8 @@ fn generate_badge(input: GenerateBadgeInput) -> ExternResult<ActionHash> {
     debug!("Final snapshot: {:?}", final_snapshot);
     
     // And count number of placements this user had and generate badge
-    let placement_app_entry_type = AppEntryDef::new(0.into(), 0.into(), EntryVisibility::Public); 
-    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(EntryType::App(placement_app_entry_type))) {
+    // let placement_app_entry_type = AppEntryDef::new(0.into(), 0.into(), EntryVisibility::Public); 
+    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(PlaceEntryTypes::Placement.try_into()?)) {
         if records.len() == 0 {
             Err(wasm_error!(WasmErrorInner::Guest(
                 "Only users who have placed a placement can generate a badge".into()
