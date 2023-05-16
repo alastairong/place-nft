@@ -1334,17 +1334,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nft"
-version = "0.0.1"
-dependencies = [
- "hdk",
- "nft_integrity",
- "place_integrity",
- "serde",
- "zome_utils",
-]
-
-[[package]]
 name = "nft_integrity"
 version = "0.0.1"
 dependencies = [
@@ -1558,6 +1547,9 @@ name = "place_integrity"
 version = "0.0.1"
 dependencies = [
  "hdi",
+ "image",
+ "imageproc",
+ "rusttype",
  "serde",
 ]
 
