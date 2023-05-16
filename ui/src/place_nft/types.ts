@@ -46,6 +46,15 @@ export interface GetAuthorRankInput {
   bucketIndex: number
 }
 
+export interface GenerateBadgeInput {
+  ethAddress: string
+  ethSignedContents: string
+}
+
+export interface GenerateHrlInput {
+  badgeAction: ActionHash
+}
+
 /** DEBUGGING API */
 export interface PlaceAtInput {
   placement: DestructuredPlacement

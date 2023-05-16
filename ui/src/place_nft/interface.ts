@@ -1,5 +1,5 @@
 import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action } from '@holochain/client';
-import { Snapshot, Placement, GetAuthorRankInput, DestructuredPlacement } from './types';
+import { Snapshot, Placement, GetAuthorRankInput, DestructuredPlacement, GenerateBadgeInput, GenerateHrlInput } from './types';
 
 export class Interface {
     private client
@@ -91,18 +91,29 @@ export class Interface {
             cap_secret: null,
             role_name: 'place_nft',
             zome_name: 'nft',
-            fn_name: 'get_NFT_image',
+            fn_name: 'get_badge',
             payload: null,
         });
     }
 
-    async linkEthereumAddress(signature: string): Promise<ActionHash> {
+    async generateNFTimage(payload: GenerateBadgeInput): Promise<any> { // TODO: Create a type for image
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
             zome_name: 'nft',
-            fn_name: 'link_ethereum_address',
-            payload: signature,
+            fn_name: 'generate_badge',
+            payload: payload,
+        });
+    }
+
+
+    async linkEthereumAddress(payload: GenerateHrlInput): Promise<ActionHash> {
+        return this.client.callZome({
+            cap_secret: null,
+            role_name: 'place_nft',
+            zome_name: 'nft',
+            fn_name: 'generate_hrl',
+            payload: payload,
         });
     }
 }
