@@ -3,6 +3,10 @@ use hdi::prelude::*;
 /// List of all Link types handled by this Zome
 #[hdk_link_types]
 pub enum LinkTypes {
+    PlacementLink,
+    SnapshotLink,
+    OldToNewSnapshotLink,
+    NewToOldSnapshotLink,
     HRLtoBadgeLink,
     BadgetoHRLLink,
     // BadgeToMinterAddressLink, // Do we need reverse to be able to look up all badges minted by a given address?

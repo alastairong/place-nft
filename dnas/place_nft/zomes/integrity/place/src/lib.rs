@@ -14,6 +14,8 @@ pub use crate::double_pixel::*;
 pub use crate::globals::*;
 pub use crate::badge::*;
 pub use crate::minter::*;
+pub use crate::links::*;
+pub use crate::validation::*;
 
 #[derive(Serialize, Deserialize)]
 #[hdk_entry_defs]
@@ -26,16 +28,6 @@ pub enum EntryTypes {
    Snapshot(Snapshot),
    #[entry_def(required_validations = 2, visibility = "public", cache_at_agent_activity = true)]
    Badge(Badge),
-}
-
-
-/// List of all Link types handled by this Zome
-#[hdk_link_types]
-pub enum LinkTypes {
-    PlacementLink,
-    SnapshotLink,
-    OldToNewSnapshotLink,
-    NewToOldSnapshotLink,
 }
 
 

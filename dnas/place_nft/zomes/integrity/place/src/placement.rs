@@ -1,5 +1,5 @@
 use hdi::prelude::*;
-use crate::LinkTypes;
+use crate::links::LinkTypes;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

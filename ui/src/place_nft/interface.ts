@@ -90,7 +90,7 @@ export class Interface {
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
-            zome_name: 'nft',
+            zome_name: 'place',
             fn_name: 'get_badge',
             payload: null,
         });
@@ -100,7 +100,7 @@ export class Interface {
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
-            zome_name: 'nft',
+            zome_name: 'place',
             fn_name: 'generate_badge',
             payload: payload,
         });
@@ -111,7 +111,7 @@ export class Interface {
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
-            zome_name: 'nft',
+            zome_name: 'place',
             fn_name: 'generate_hrl',
             payload: payload,
         });

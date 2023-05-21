@@ -2,6 +2,8 @@ use hdi::prelude::*;
 use image::{ImageBuffer, Rgba};
 use imageproc::{drawing::draw_text_mut};
 use rusttype::{Font, Scale};
+use crate::snapshot::Snapshot;
+use crate::double_pixel::DoublePixel;
 
 // Defines coordinates and pixel colors for each placement in a Snapshot. 
 // Used when applying Snapshot to template
