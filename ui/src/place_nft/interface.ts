@@ -62,7 +62,7 @@ export class Interface {
     }
 
     async getAuthorRank(bucketIndex: number): Promise<number> {
-        const input: GetAuthorRankInput = {
+        const payload: GetAuthorRankInput = {
             author: this.client.myPubKey,
             bucketIndex: bucketIndex,
           };
@@ -72,7 +72,7 @@ export class Interface {
             role_name: 'place_nft',
             zome_name: 'place',
             fn_name: 'get_author_rank',
-            payload: input,
+            payload: payload,
         });
     }
 
@@ -96,7 +96,13 @@ export class Interface {
         });
     }
 
-    async generateNFTimage(payload: GenerateBadgeInput): Promise<any> { // TODO: Create a type for image
+    // Generates a badge from the final snapshot of the canvas, the user's history, and the user's signature
+    async generateNFTimage(ethAddress: string, ethSignedContents: string): Promise<any> { // TODO: Create a type for image
+        const payload: GenerateBadgeInput = {
+            ethAddress: ethAddress,
+            ethSignedContents: ethSignedContents    
+        };
+
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
@@ -106,8 +112,11 @@ export class Interface {
         });
     }
 
-
-    async linkEthereumAddress(payload: GenerateHrlInput): Promise<ActionHash> {
+    // Generates a link from a badge's ethereum address to the badge action
+    async generateHrl(badgeAction: ActionHash): Promise<ActionHash> {
+        const payload: GenerateHrlInput = {
+            badgeAction: badgeAction
+        };
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
