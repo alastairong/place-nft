@@ -4,8 +4,8 @@ require('dotenv').config();
 
 const { API_URL, PRIVATE_KEY } = process.env;
 const config: HardhatUserConfig = {
-  solidity: "0.8.18",
-  defaultNetwork: "goerli",
+   solidity: "0.8.18",
+   // defaultNetwork: "goerli",
    networks: {
       hardhat: {},
       goerli: {
