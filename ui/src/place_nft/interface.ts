@@ -86,12 +86,22 @@ export class Interface {
         });
     }
 
-    async getNFTimage(): Promise<any> { // TODO: Create a type for image
+    async getBadge(actionHash: ActionHash): Promise<Uint8Array | null> { 
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
             zome_name: 'place',
             fn_name: 'get_badge',
+            payload: actionHash,
+        });
+    }
+
+    async getBadgeAction(): Promise<ActionHash | null> { 
+        return this.client.callZome({
+            cap_secret: null,
+            role_name: 'place_nft',
+            zome_name: 'place',
+            fn_name: 'get_badge_action',
             payload: null,
         });
     }
@@ -112,7 +122,7 @@ export class Interface {
         });
     }
 
-    // Generates a link from a badge's ethereum address to the badge action
+    // Generates a pair of links between the HRL of (badge_action&&eth_address) to the badge action
     async generateHrl(badgeAction: ActionHash): Promise<ActionHash> {
         const payload: GenerateHrlInput = {
             badgeAction: badgeAction
@@ -125,4 +135,6 @@ export class Interface {
             payload: payload,
         });
     }
+
+    // async getHrl(badgeAction: ActionHash): Promise<ActionHash> {
 }

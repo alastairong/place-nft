@@ -6,6 +6,7 @@ pub mod globals;
 pub mod links;
 pub mod badge;
 pub mod minter;
+pub mod nft_record;
 mod validation;
 
 pub use crate::placement::*;
@@ -16,6 +17,7 @@ pub use crate::badge::*;
 pub use crate::minter::*;
 pub use crate::links::*;
 pub use crate::validation::*;
+pub use crate::nft_record::*;
 
 #[derive(Serialize, Deserialize)]
 #[hdk_entry_defs]

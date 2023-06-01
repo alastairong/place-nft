@@ -7,34 +7,38 @@ fn init(_: ()) -> ExternResult<InitCallbackResult> {
   Ok(InitCallbackResult::Pass)
 }
 
-// TODO: Accept an actionhash?
 #[hdk_extern]
-fn get_badge(_: ()) -> ExternResult<Vec<u8>> {
-    
+fn get_badge_action(_: ()) -> ExternResult<Option<ActionHash>> {
     // Search if they already have committed their badge. It should be on their chain
-    // If it does, return the image
+    // If it does, return the hash of the action
     // let ZomeInfo {id, ..} = zome_info()?; // There's only 1 app entry def in this zome
     // let badge_app_entry_type = AppEntryDef::new(0.into(), id, EntryVisibility::Public);
-    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(EntryTypesTypes::Badge.try_into()?)) {
-        let badge_result = records[0].entry.to_app_option() // Chain should not have more than one badge anyway so just discard the rest in this POC
-            .map_err(|err| wasm_error!(WasmErrorInner::Guest(
-                err.into()
-            )));
-        
-        let badge: Badge = match badge_result {
-            Ok(Some(badge)) => badge,
-            Ok(None) => return Err(wasm_error!(WasmErrorInner::Guest(
-                "Something went wrong".into()
-            ))),
-            Err(err) => return Err(err),
-        };
-
-        Ok(badge.image_data)
+    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(UnitEntryTypes::Badge.try_into()?)) {
+        if records.is_empty() {
+            Ok(None)
+        } else {
+            let badge_action = records[0].action_address().clone();
+            Ok(Some(badge_action))
+        }
     } else {
         Err(wasm_error!(WasmErrorInner::Guest(
-            "Badge not found".into()
+            "Cannot deserialise into a badge".into()
         )))
     }
+}
+
+#[hdk_extern]
+fn get_badge(action_hash: ActionHash) -> ExternResult<Vec<u8>> {
+    let maybe_record = get(action_hash, GetOptions::default())?;
+    
+    let badge = match maybe_record {
+        Some(record) => record.entry().to_app_option::<Badge>().unwrap().unwrap(),
+        None => return Err(wasm_error!(WasmErrorInner::Guest(
+            "No badge exists at that address".into()
+        ))),
+    };
+
+    Ok(badge.image_data)
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]
@@ -77,7 +81,7 @@ fn generate_badge(input: GenerateBadgeInput) -> ExternResult<ActionHash> {
     
     // And count number of placements this user had and generate badge
     // let placement_app_entry_type = AppEntryDef::new(0.into(), 0.into(), EntryVisibility::Public); 
-    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(PlaceEntryTypes::Placement.try_into()?)) {
+    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(UnitEntryTypes::Placement.try_into()?)) {
         if records.len() == 0 {
             Err(wasm_error!(WasmErrorInner::Guest(
                 "Only users who have placed a placement can generate a badge".into()
@@ -101,7 +105,7 @@ pub struct GenerateHrlInput {
 }
 
 #[hdk_extern]
-fn generate_hrl(input: GenerateHrlInput) -> ExternResult<()> {
+fn generate_hrl(input: GenerateHrlInput) -> ExternResult<String> {
     
     if let Some(record) = get(input.badge_action.clone(), Default::default())? { // Confirms that this badge exists
         
@@ -139,12 +143,42 @@ fn generate_hrl(input: GenerateHrlInput) -> ExternResult<()> {
             links::BadgetoHRLLink::link_type(),
             links::BadgetoHRLLink::link_tag(),
         )?;
-        Ok(())
+        Ok(hrl)
     } else {
         Err(wasm_error!(WasmErrorInner::Guest(
             "Badge not found".into()
         )))
     }
+}
+
+
+#[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]
+pub struct SaveNftInput {
+    nft_id: String,
+    contract_address: String,
+    hrl: String,
+}
+
+
+#[hdk_extern]
+fn save_nft(input: SaveNftInput) -> ExternResult<ActionHash> {
+    let action_hash = create_entry(EntryTypes::Nft(input.clone()))?; // FIXME
+    let hrl_anchor = get_anchor_typed_path(&input.hrl)?;
+    create_link(
+        hrl_anchor.path_entry_hash()?,         
+        action_hash.clone(),       
+        links::BadgetoHRLLink::link_type(),
+        links::BadgetoHRLLink::link_tag(),
+    )?;
+
+    Ok(action_hash)
+}
+
+#[hdk_extern]
+fn get_nft(input: ActionHash) -> ExternResult<Vec<u8>> { // retrieve the registered NFT for a given HRL
+    //;
+
+    Ok()
 }
 
 fn publish_badge(badge: Badge) -> ExternResult<ActionHash> {
