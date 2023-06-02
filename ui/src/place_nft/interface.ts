@@ -1,5 +1,5 @@
 import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action } from '@holochain/client';
-import { Snapshot, Placement, GetAuthorRankInput, DestructuredPlacement, GenerateBadgeInput, GenerateHrlInput } from './types';
+import { Snapshot, Placement, NftRecord, GetAuthorRankInput, DestructuredPlacement, GenerateBadgeInput, GenerateHrlInput, SaveNftInput } from './types';
 
 export class Interface {
     private client
@@ -136,5 +136,32 @@ export class Interface {
         });
     }
 
-    // async getHrl(badgeAction: ActionHash): Promise<ActionHash> {
+    async saveNft(nftId: String, contractAddress: String, hrl: String): Promise<ActionHash> {
+        const payload: SaveNftInput = {
+            nftId,
+            contractAddress,
+            hrl
+        };
+
+          return this.client.callZome({
+            cap_secret: null,
+            role_name: 'place_nft',
+            zome_name: 'place',
+            fn_name: 'save_nft',
+            payload: payload,
+        });
+    }
+
+    async getNft(hrl: String): Promise<NftRecord | null> {
+    
+        return this.client.callZome({
+            cap_secret: null,
+            role_name: 'place_nft',
+            zome_name: 'place',
+            fn_name: 'get_nft',
+            payload: hrl,
+        });
+    }
+
+    
 }
