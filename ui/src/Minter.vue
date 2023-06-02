@@ -25,7 +25,7 @@
           <div v-if="!!linkToNFT">
             <p>PLACEHOLDER FOR BADGE IMAGE</p>
             <p> Your NFT has already been minted. You can find it here:</p>
-            <p>PLACEHOLDER: Link to NFT based on NFTID?</p>
+            <p>PLACEHOLDER: Link to NFT based on NFTID? BY USING THE BADGE ACTION TO CALCULATE THE HRL AND FIND THE NFT</p>
           </div>
         </div>
       </div>

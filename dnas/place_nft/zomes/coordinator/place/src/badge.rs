@@ -162,7 +162,7 @@ pub struct SaveNftInput {
 #[hdk_extern]
 fn save_nft(input: SaveNftInput) -> ExternResult<ActionHash> {
     let nft_record = NftRecord::new(input.nft_id, input.contract_address);
-    let action_hash = create_entry(nft_record.clone())?;
+    let action_hash = create_entry(EntryTypes::NftRecord(nft_record.clone()))?;
     
     // Create link from HRL to NFT
     let hrl_anchor = get_anchor_typed_path(&input.hrl)?;
@@ -177,10 +177,30 @@ fn save_nft(input: SaveNftInput) -> ExternResult<ActionHash> {
 }
 
 #[hdk_extern]
-fn get_nft(input: ActionHash) -> ExternResult<Vec<u8>> { // retrieve the registered NFT for a given HRL
-    //;
+fn get_nft(hrl: String) -> ExternResult<Option<NftRecord>> { // retrieve the registered NFT for a given HRL
+    let hrl_anchor = get_anchor_typed_path(&hrl)?;
+    let links_result = get_links(
+        hrl_anchor.path_entry_hash()?,         
+        LinkTypes::HRLtoNftIdLink,
+        None
+    )?;
 
-    Ok()
+    if links_result.is_empty() {
+        Ok(None)
+    } else {
+        let target: ActionHash = ActionHash::from(links_result[0].target.clone()).into(); // There should only be one link
+        let maybe_record = get(target, GetOptions::default())?;
+
+        match maybe_record {
+            Some(record) => {
+                let maybe_nft_record = record.entry().to_app_option::<NftRecord>()
+                    .map_err(|err| wasm_error!(WasmErrorInner::Guest(err.into())))?;
+                    
+                Ok(maybe_nft_record)
+            },
+            None => Ok(None)
+        }           
+    }
 }
 
 fn publish_badge(badge: Badge) -> ExternResult<ActionHash> {

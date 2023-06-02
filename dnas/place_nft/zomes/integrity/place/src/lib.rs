@@ -30,6 +30,8 @@ pub enum EntryTypes {
    Snapshot(Snapshot),
    #[entry_def(required_validations = 2, visibility = "public", cache_at_agent_activity = true)]
    Badge(Badge),
+   #[entry_def(required_validations = 2, visibility = "public", cache_at_agent_activity = true)]
+   NftRecord(NftRecord),
 }
 
 
