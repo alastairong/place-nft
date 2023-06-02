@@ -159,10 +159,12 @@ pub struct SaveNftInput {
     hrl: String,
 }
 
-
 #[hdk_extern]
 fn save_nft(input: SaveNftInput) -> ExternResult<ActionHash> {
-    let action_hash = create_entry(EntryTypes::Nft(input.clone()))?; // FIXME
+    let nft_record = NftRecord::new(input.nft_id, input.contract_address);
+    let action_hash = create_entry(nft_record.clone())?;
+    
+    // Create link from HRL to NFT
     let hrl_anchor = get_anchor_typed_path(&input.hrl)?;
     create_link(
         hrl_anchor.path_entry_hash()?,         
