@@ -107,7 +107,7 @@ export class Interface {
     }
 
     // Generates a badge from the final snapshot of the canvas, the user's history, and the user's signature
-    async generateNFTimage(ethAddress: string, ethSignedContents: string): Promise<any> { // TODO: Create a type for image
+    async generateBadgeImage(ethAddress: string, ethSignedContents: string): Promise<ActionHash> { 
         const payload: GenerateBadgeInput = {
             ethAddress: ethAddress,
             ethSignedContents: ethSignedContents    

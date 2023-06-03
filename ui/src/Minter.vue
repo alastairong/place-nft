@@ -15,7 +15,7 @@
           <div v-if="isWalletConnected && !badgeImage">
             <p>No badge found. If you have participated in the game you can create an badge</p>
             <p>and NFT based on your contribution</p>
-            <button>Create badge</button>
+            <button @click="createBadge">Create Badge</button>
           </div>
           <div v-if="isWalletConnected && !!badgeImage"> 
             <img v-bind:src="badgeImage" />
@@ -42,11 +42,12 @@
   import { ETHEREUM_NETWORK } from './ethereum/consts'
   import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action } from '@holochain/client';
   import { NftRecord } from './place_nft/types';
-  import { EthereumProvider } from '@walletconnect/ethereum-provider'
+  import { EthereumProvider } from '@walletconnect/ethereum-provider';
+  import { getAddress } from 'viem'
 
   // Main page logic
   export default defineComponent({
-    data(): { loading: boolean; error: any, badgeAction: ActionHash | null, badgeImageRaw: any, badgeImage: any, walletProvider: any, hrl: String, nftRecord: NftRecord | null, isConnected: Boolean } {
+    data(): { loading: boolean; error: any, badgeAction: ActionHash | null, badgeImageRaw: any, badgeImage: any, walletProvider: any, hrl: string, nftRecord: NftRecord | null, isWalletConnected: Boolean, walletAddress: string } {
       return {
         loading: true,
         error: undefined,
@@ -56,7 +57,8 @@
         walletProvider: null,
         hrl: "",
         nftRecord: null,
-        isConnected: true
+        isWalletConnected: false,
+        walletAddress: ""
       }
     },
     async mounted() {
@@ -67,7 +69,7 @@
         projectId: "0bdbc2e75cc18b77f5097aa944842208",
         showQrModal: true,
         qrModalOptions: { themeMode: 'dark' },
-        chains: ["eip155:5"], // Goerli https://eips.ethereum.org/EIPS/eip-155#list-of-chain-ids
+        chains: [5], // Goerli https://eips.ethereum.org/EIPS/eip-155#list-of-chain-ids
         methods: ['eth_sendTransaction', 'personal_sign'],
         events: ['chainChanged', 'accountsChanged'],
         metadata: {
@@ -78,7 +80,16 @@
         }
       })
 
-      this.walletProvider.on('connect', this.isConnected = true)
+      this.walletProvider.on('connect', async () => {
+        this.isWalletConnected = true
+        const accounts = await this.walletProvider.enable()
+        this.walletAddress = getAddress(accounts[0]!)
+
+        if (!!this.badgeAction) {
+          this.hrl = this.badgeAction + this.walletAddress
+          this.nftRecord = await this.happ.getNft(this.hrl)
+        }
+      })
       
     },
     methods: {
@@ -87,8 +98,6 @@
       
         if (!!this.badgeAction) {
           this.badgeImageRaw = await this.happ.getBadge(this.badgeAction)
-          this.hrl = this.badgeAction + "";
-          this.getNftRecord(this.hrl);
         }
       },
 
@@ -108,12 +117,29 @@
       connect() {
         // your connect logic here
         this.walletProvider?.connect();
+      },
+
+      async createBadge() {
+        this.badgeAction = await this.happ.generateBadgeImage(this.walletAddress, "Signed Placeholder")
+        this.badgeImageRaw = await this.happ.getBadge(this.badgeAction)
       }
     },
     watch: {
       badgeImageRaw(newBadgeImageRaw) {
         let imageblob = new Blob([new Uint8Array(newBadgeImageRaw)], { type: 'image/png' });
         this.badgeImage = URL.createObjectURL(imageblob);
+      },
+
+      badgeAction(newBadgeAction) {
+        if (!!this.walletAddress) {
+          this.hrl = newBadgeAction + this.walletAddress;
+        }
+      },
+
+      walletAddress(newWalletAddress) {
+        if (!!this.badgeAction) {
+          this.hrl = this.badgeAction + newWalletAddress;
+        }
       },
     },
 
