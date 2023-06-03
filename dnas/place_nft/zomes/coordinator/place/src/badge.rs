@@ -1,12 +1,6 @@
 use hdk::prelude::*;
 use place_integrity::*;
 
-/// Called the first time a zome call is made to the cell containing this zome
-#[hdk_extern]
-fn init(_: ()) -> ExternResult<InitCallbackResult> {
-  Ok(InitCallbackResult::Pass)
-}
-
 #[hdk_extern]
 fn get_badge_action(_: ()) -> ExternResult<Option<ActionHash>> {
     // Search if they already have committed their badge. It should be on their chain
