@@ -22,7 +22,7 @@
             <div v-if="!nftRecord">
               <p>A badge has been found but no corresponding NFT</p>
               <p>Do you want to mint your NFT?</p>
-              <button>Mint NFT</button>
+              <button @click="mintNft">Mint NFT</button>
             </div>
             <div v-if="!!nftRecord">
               <p> Your NFT has already been minted. You can find it here:</p>
@@ -105,7 +105,10 @@
         this.nftRecord = await this.happ.getNft(hrl)
       },
 
-      async saveNftRecord(nftId: String, contractAddress: String) {
+      async mintNft(contractAddress: String) {
+        
+        const nftId = "TBD" // make contract call
+        
         this.nftRecord = {
           nftId,
           contractAddress
@@ -122,7 +125,8 @@
       async createBadge() {
         this.badgeAction = await this.happ.generateBadgeImage(this.walletAddress, "Signed Placeholder")
         this.badgeImageRaw = await this.happ.getBadge(this.badgeAction)
-      }
+      },
+
     },
     watch: {
       badgeImageRaw(newBadgeImageRaw) {
