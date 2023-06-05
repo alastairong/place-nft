@@ -71,7 +71,7 @@
         qrModalOptions: { themeMode: 'dark' },
         chains: [5], // Goerli https://eips.ethereum.org/EIPS/eip-155#list-of-chain-ids
         methods: ['eth_sendTransaction', 'personal_sign'],
-        events: ['chainChanged', 'accountsChanged'],
+        events: ['connect', 'accountsChanged'],
         metadata: {
           name: 'Place-NFT',
           description: 'My Dapp description',
