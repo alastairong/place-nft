@@ -1,10 +1,1 @@
-// ETH URL:
-interface EthereumNetwork {
-    id: number
-    etherscanLink: string
-  }
-  
-  export const kEthereumMainnetId = 1
-  export const kEthereumGoerliId = 5
-
-  export const ETHEREUM_NETWORK = { id: kEthereumGoerliId, etherscanLink: 'https://goerli.etherscan.io/tx/' }
+  export const CONTRACT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3'

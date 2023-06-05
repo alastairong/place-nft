@@ -39,7 +39,7 @@
   import { defineComponent, inject, ComputedRef } from 'vue';
   import { Interface } from './place_nft/interface';
   import '@material/mwc-circular-progress';
-  import { ETHEREUM_NETWORK } from './ethereum/consts'
+  import { CONTRACT_ADDRESS } from './ethereum/consts'
   import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action } from '@holochain/client';
   import { NftRecord } from './place_nft/types';
   import { EthereumProvider } from '@walletconnect/ethereum-provider';
@@ -105,16 +105,15 @@
         this.nftRecord = await this.happ.getNft(hrl)
       },
 
-      async mintNft(contractAddress: String) {
+      async mintNft() {
         
         const nftId = "TBD" // make contract call
-        
         this.nftRecord = {
           nftId,
-          contractAddress
+          contractAddress: CONTRACT_ADDRESS
         }
         
-        await this.happ.saveNft(nftId, contractAddress, this.hrl)
+        await this.happ.saveNft(nftId, CONTRACT_ADDRESS, this.hrl)
       },
 
       connect() {
