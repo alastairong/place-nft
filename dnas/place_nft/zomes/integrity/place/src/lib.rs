@@ -4,20 +4,18 @@ pub mod snapshot;
 pub mod double_pixel;
 pub mod globals;
 pub mod links;
-pub mod badge;
-pub mod minter;
-pub mod nft_record;
+// pub mod badge;
+// pub mod nft_record;
 mod validation;
 
 pub use crate::placement::*;
 pub use crate::snapshot::*;
 pub use crate::double_pixel::*;
 pub use crate::globals::*;
-pub use crate::badge::*;
-pub use crate::minter::*;
+// pub use crate::badge::*;
 pub use crate::links::*;
 pub use crate::validation::*;
-pub use crate::nft_record::*;
+// pub use crate::nft_record::*;
 
 #[derive(Serialize, Deserialize)]
 #[hdk_entry_defs]
@@ -28,10 +26,10 @@ pub enum EntryTypes {
    Placement(Placement),
    #[entry_def(required_validations = 2, visibility = "public", cache_at_agent_activity = true)]
    Snapshot(Snapshot),
-   #[entry_def(required_validations = 2, visibility = "public", cache_at_agent_activity = true)]
-   Badge(Badge),
-   #[entry_def(required_validations = 2, visibility = "public", cache_at_agent_activity = true)]
-   NftRecord(NftRecord),
+//    #[entry_def(required_validations = 2, visibility = "public", cache_at_agent_activity = true)]
+//    Badge(Badge),
+//    #[entry_def(required_validations = 2, visibility = "public", cache_at_agent_activity = true)]
+//    NftRecord(NftRecord),
 }
 
 

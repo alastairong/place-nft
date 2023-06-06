@@ -23,9 +23,9 @@
     "@vaadin/date-time-picker": "^23.2.8",
     "@walletconnect/ethereum-provider": "^2.7.7",
     "@web3modal/standalone": "^2.4.2",
-    "viem": "^0.3.50",
+    "ethers": "=5.7.2",
     "vue": "^3.2.25",
-    "web3": "^1.8.2"
+    "web3": "^1.10.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.0.0",

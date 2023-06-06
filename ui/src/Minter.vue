@@ -43,11 +43,13 @@
   import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action } from '@holochain/client';
   import { NftRecord } from './place_nft/types';
   import { EthereumProvider } from '@walletconnect/ethereum-provider';
-  import { getAddress } from 'viem'
+  import { ethers } from "ethers";
+  import contractArtifact from '../../contract/artifacts/contracts/place_nft.sol/placeNFT.json';
+  
 
   // Main page logic
   export default defineComponent({
-    data(): { loading: boolean; error: any, badgeAction: ActionHash | null, badgeImageRaw: any, badgeImage: any, walletProvider: any, hrl: string, nftRecord: NftRecord | null, isWalletConnected: Boolean, walletAddress: string } {
+    data(): { loading: boolean; error: any, badgeAction: ActionHash | null, badgeImageRaw: any, badgeImage: any, walletProvider: any, signer: any, hrl: string, nftRecord: NftRecord | null, isWalletConnected: Boolean, walletAddress: string } {
       return {
         loading: true,
         error: undefined,
@@ -55,10 +57,11 @@
         badgeImageRaw: null,
         badgeImage: null,
         walletProvider: null,
+        signer: null,
         hrl: "",
         nftRecord: null,
         isWalletConnected: false,
-        walletAddress: ""
+        walletAddress: "",
       }
     },
     async mounted() {
@@ -82,8 +85,11 @@
 
       this.walletProvider.on('connect', async () => {
         this.isWalletConnected = true
-        const accounts = await this.walletProvider.enable()
-        this.walletAddress = getAddress(accounts[0]!)
+
+        const provider = new ethers.providers.Web3Provider(this.walletProvider);
+        this.signer = provider.getSigner();
+
+        this.walletAddress = this.signer.getAddress()
 
         if (!!this.badgeAction) {
           this.hrl = this.badgeAction + this.walletAddress
@@ -107,7 +113,18 @@
 
       async mintNft() {
         
-        const nftId = "TBD" // make contract call
+        // instantiate smart contract
+        const nftContractInstance = new ethers.Contract(CONTRACT_ADDRESS, contractArtifact.abi, this.signer);
+        
+        // make call to smart contract method 
+        const tx = await nftContractInstance.mintNft(this.badgeAction); // make contract call
+        const receipt = await tx.wait(); // wait for tx to be mined
+        
+        // look for broadcasted event with nftId
+        const event = receipt.events.find((event: any) => event.event === 'Minted');
+        const newItemId = event.args.newItemId;
+        const nftId = newItemId.toNumber();
+
         this.nftRecord = {
           nftId,
           contractAddress: CONTRACT_ADDRESS

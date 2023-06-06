@@ -23,7 +23,5 @@
     "npm": ">=7.0.0"
   },
   "dependencies": {
-    "@walletconnect/ethereum-provider": "^2.7.7",
-    "@web3modal/standalone": "^2.4.2"
   }
 }
