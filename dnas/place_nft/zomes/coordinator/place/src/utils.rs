@@ -11,7 +11,7 @@ pub const ROOT: &'static str = "root";
 pub fn get_path(now: u32) -> Path {
    let sec_since_start_of_game = now - START_TIME;
    debug!("sec_since_start_of_game is: {}", sec_since_start_of_game);
-   assert!(sec_since_start_of_game < 24 * 3600);
+   // assert!(sec_since_start_of_game < 24 * 3600); // removed now that we can have a finished game for minting
 
    // create hour path component
    let hour_index = sec_since_start_of_game / (60 * 60); 
