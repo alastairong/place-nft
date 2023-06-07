@@ -1,34 +1,35 @@
-// use hdi::prelude::*;
+use hdi::prelude::*;
 // use image::{ImageBuffer, Rgba};
 // use imageproc::{drawing::draw_text_mut};
-// use rusttype::{Font, Scale};
-// use crate::snapshot::Snapshot;
-// use crate::double_pixel::DoublePixel;
+use rusttype::{Font, Scale};
+use photon_rs::native::{open_image, save_image};
+use crate::snapshot::Snapshot;
+use crate::double_pixel::DoublePixel;
 
-// // Defines coordinates and pixel colors for each placement in a Snapshot. 
-// // Used when applying Snapshot to template
-// pub struct PixelStruct {
-//    x: u32,
-//    y: u32,
+// Defines coordinates and pixel colors for each placement in a Snapshot. 
+// Used when applying Snapshot to template
+pub struct PixelStruct {
+   x: u32,
+   y: u32,
 //    pixel: Rgba<u8>
-// }
+}
 
-// // Template constants
-// const TEMPLATE_OFFSET: (u32, u32) = (0, 0);
-// const PLACEMENT_COUNT_OFFSET: (u32, u32) = (80, 135);
-// const AUTHOR_OFFSET: (u32, u32) = (45, 148);
-// const FONT_DATA: &[u8; 168260] = include_bytes!("../Roboto-Regular.ttf");
-// const TEMPLATE_DATA: &[u8] = include_bytes!("../template.png");
+// Template constants
+const TEMPLATE_OFFSET: (u32, u32) = (0, 0);
+const PLACEMENT_COUNT_OFFSET: (u32, u32) = (80, 135);
+const AUTHOR_OFFSET: (u32, u32) = (45, 148);
+const FONT_DATA: &[u8; 168260] = include_bytes!("../Roboto-Regular.ttf");
+const TEMPLATE_DATA: &[u8] = include_bytes!("../template.png");
 
-// /// A Public Entry representing the whole canvas for a specific time bucket
-// #[hdk_entry_helper]
-// #[derive(Clone, PartialEq)]
-// #[serde(rename_all = "camelCase")]
-// pub struct Badge {
-//    pub image_data: Vec<u8>,
-//    pub eth_address: String,
-//    pub eth_signed_contents: String,
-// }
+/// A Public Entry representing the whole canvas for a specific time bucket
+#[hdk_entry_helper]
+#[derive(Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Badge {
+   pub image_data: Vec<u8>,
+   pub eth_address: String,
+   pub eth_signed_contents: String,
+}
 
 // impl Badge {
 //     pub fn new(final_snapshot: Snapshot, placement_count: u32, author: &str, eth_address: String, eth_signed_contents: String) -> Self {
@@ -119,21 +120,21 @@
 //    image
 // }
 
-// const COLOR_PALETTE: [&str; 16] = [
-//    "#FFFFFF",
-//    "#E4E4E4",
-//    "#888888",
-//    "#222222",
-//    "#FDA1D3",
-//    "#F82200",
-//    "#F09200",
-//    "#A86839",
-//    "#E6DA00",
-//    "#7BE400",
-//    "#0FC300",
-//    "#34D7E0",
-//    "#2B84CD",
-//    "#3200F4",
-//    "#DE64EA",
-//    "#8E0A85",
-// ];
+const COLOR_PALETTE: [&str; 16] = [
+   "#FFFFFF",
+   "#E4E4E4",
+   "#888888",
+   "#222222",
+   "#FDA1D3",
+   "#F82200",
+   "#F09200",
+   "#A86839",
+   "#E6DA00",
+   "#7BE400",
+   "#0FC300",
+   "#34D7E0",
+   "#2B84CD",
+   "#3200F4",
+   "#DE64EA",
+   "#8E0A85",
+];
