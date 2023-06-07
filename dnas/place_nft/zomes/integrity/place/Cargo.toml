@@ -13,4 +13,3 @@ serde = { workspace = true }
 image = { workspace = true }
 imageproc = { workspace = true }
 rusttype = { workspace = true }
-photon-rs = { workspace = true }
