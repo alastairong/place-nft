@@ -38,7 +38,7 @@
   import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/utils';
   import '@material/mwc-circular-progress';
   // TODO: Placements outside of a snapshot are not currently rendered
-  const GAME_START_TIME = 1686170736; // Must be updated to match DNA timestamp
+  const GAME_START_TIME = 1686258489; // Must be updated to match DNA timestamp
   
   export default defineComponent({
     components: {
