@@ -56,7 +56,7 @@
         error: undefined,
         timer: undefined,
         colors: COLOR_PALETTE,
-        finished: Date.now() > GAME_START_TIME + 24 * 60 * 60
+        finished: Date.now() > (GAME_START_TIME + 24 * 60 * 60) * 1000
       }
     },
     created() {
@@ -66,6 +66,8 @@
       clearInterval(this.timer); // clear timer when component is destroyed
     },
     async mounted() {
+      console.log("Checking if finished")
+      console.log(Date.now() > GAME_START_TIME + 24 * 60 * 60)
       this.calculateCurrentBucket();
       await this.loadInitialData();
       toRaw(this.client).on('signal', signal => {
