@@ -65,32 +65,40 @@
       }
     },
     async mounted() {
+      console.log("getting badge Image")
       this.getBadgeImage()
+      console.log("got badge Image: " + this.badgeImageRaw)
       this.loading = false
-
-      this.walletProvider = await EthereumProvider.init({
-        projectId: "0bdbc2e75cc18b77f5097aa944842208",
-        showQrModal: true,
-        qrModalOptions: { themeMode: 'dark' },
-        chains: [5], // Goerli https://eips.ethereum.org/EIPS/eip-155#list-of-chain-ids
-        methods: ['eth_sendTransaction', 'personal_sign'],
-        events: ['connect', 'accountsChanged'],
-        metadata: {
-          name: 'Place-NFT',
-          description: 'My Dapp description',
-          url: 'https://my-dapp.com',
-          icons: ['https://my-dapp.com/logo.png']
-        }
-      })
-
+      console.log("Initializing wallet provider")
+      try {
+        this.walletProvider = await EthereumProvider.init({
+          projectId: "0bdbc2e75cc18b77f5097aa944842208",
+          showQrModal: true,
+          qrModalOptions: { themeMode: 'dark' },
+          chains: [5], // Goerli https://eips.ethereum.org/EIPS/eip-155#list-of-chain-ids
+          methods: ['eth_sendTransaction', 'personal_sign'],
+          events: ['connect', 'accountsChanged'],
+          metadata: {
+            name: 'Place-NFT',
+            description: 'My Dapp description',
+            url: 'https://my-dapp.com',
+            icons: ['https://my-dapp.com/logo.png']
+          }
+        })
+      } catch (e) {
+        console.log("Error initializing wallet provider: " + e)
+      }
+      
+      console.log("Initialized wallet provider, listening for connection")
       this.walletProvider.on('connect', async () => {
         this.isWalletConnected = true
-
+        console.log("Wallet connected, creating ethers provider")
         const provider = new ethers.providers.Web3Provider(this.walletProvider);
+        console.log("Getting ethers signer object")
         this.signer = provider.getSigner();
-
+        console.log("Got ethers signer object: " + this.signer)
         this.walletAddress = this.signer.getAddress()
-
+        console.log("Got wallet address: " + this.walletAddress)
         if (!!this.badgeAction) {
           this.hrl = this.badgeAction + this.walletAddress
           this.nftRecord = await this.happ.getNft(this.hrl)
