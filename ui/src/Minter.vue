@@ -72,23 +72,18 @@
       console.log("Initializing wallet provider")
       try {
         this.walletProvider = await EthereumProvider.init({
-          projectId: "0bdbc2e75cc18b77f5097aa944842208",
+          projectId: "3a9ef680dcb4795af0014281b0ddc95f",
           showQrModal: true,
           qrModalOptions: { themeMode: 'dark' },
           chains: [5], // Goerli https://eips.ethereum.org/EIPS/eip-155#list-of-chain-ids
           methods: ['eth_sendTransaction', 'personal_sign'],
           events: ['connect', 'accountsChanged'],
-          metadata: {
-            name: 'Place-NFT',
-            description: 'My Dapp description',
-            url: 'https://my-dapp.com',
-            icons: ['https://my-dapp.com/logo.png']
-          }
         })
       } catch (e) {
         console.log("Error initializing wallet provider: " + e)
       }
-      
+      console.log("test logging?")
+      console.log(this.walletProvider)
       console.log("Initialized wallet provider, listening for connection")
       this.walletProvider.on('connect', async () => {
         this.isWalletConnected = true

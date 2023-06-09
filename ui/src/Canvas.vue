@@ -241,6 +241,11 @@
           this.grid = updateGrid(baseImageData, newPlacements); // unpack grid data
         }
       },
+      finished(newValue) { 
+        if (newValue) {
+          clearInterval(this.timer); // cancel the timer when game is finished
+        }
+      }
     },
 
     setup() {
@@ -318,6 +323,10 @@
       background-color: white;
       padding: 20px;
       border: 1px solid #ccc;
+    }
+
+    w3m-modal {
+      z-index: 1003; /* higher than .modal */
     }
   </style>
   
