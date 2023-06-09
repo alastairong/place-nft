@@ -23,7 +23,9 @@
       </div>
       <div v-if="finished">
         <div class="overlay"></div> <!--if this doesn't cover enough, move this to top level and add v-if condition -->
-        <Minter></Minter>
+        <div class="modal">
+          <Minter></Minter>
+        </div>
       </div>
     </div>
   
@@ -38,7 +40,7 @@
   import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/utils';
   import '@material/mwc-circular-progress';
   // TODO: Placements outside of a snapshot are not currently rendered
-  const GAME_START_TIME = 1679090595; // Must be updated to match DNA timestamp
+  const GAME_START_TIME = 1686217362; // Must be updated to match DNA timestamp
   
   export default defineComponent({
     components: {
@@ -56,7 +58,7 @@
         error: undefined,
         timer: undefined,
         colors: COLOR_PALETTE,
-        finished: Date.now() > GAME_START_TIME + 24 * 60 * 60
+        finished: Date.now() > (GAME_START_TIME + 23 * 60 * 60) * 1000
       }
     },
     created() {
@@ -66,6 +68,8 @@
       clearInterval(this.timer); // clear timer when component is destroyed
     },
     async mounted() {
+      console.log(Date.now())
+      console.log((GAME_START_TIME + 24 * 60 * 60) * 1000)
       this.calculateCurrentBucket();
       await this.loadInitialData();
       toRaw(this.client).on('signal', signal => {
@@ -301,7 +305,19 @@
       height: 100%;
       width: 100%;
       background-color: rgba(0, 0, 0, 0.5);
-      z-index: 9999;
+      z-index: 1000;
+    }
+
+    .modal {
+      /* your modal styles */
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1002; /* higher than .overlay */
+      background-color: white;
+      padding: 20px;
+      border: 1px solid #ccc;
     }
   </style>
   

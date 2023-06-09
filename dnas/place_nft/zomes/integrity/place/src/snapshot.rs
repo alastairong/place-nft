@@ -2,7 +2,7 @@ use hdi::prelude::*;
 use crate::double_pixel::DoublePixel;
 use crate::Placement;
 use crate::globals::*;
-use crate::LinkTypes;
+use crate::links::LinkTypes;
 
 /// For typescript bindings compatability
 type Uint8Array = Vec<DoublePixel>;

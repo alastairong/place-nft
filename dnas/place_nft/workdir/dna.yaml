@@ -4,15 +4,11 @@ name: place_nft
 integrity:
   network_seed: ~
   properties: ~
-  origin_time: 1673545422448227
+  origin_time: 1686076915000
   zomes:
     - name: place_integrity
       hash: ~
       bundled: "../../../target/wasm32-unknown-unknown/release/place_integrity.wasm"
-      dependencies: ~
-    - name: nft_integrity
-      hash: ~
-      bundled: "../../../target/wasm32-unknown-unknown/release/nft_integrity.wasm"
       dependencies: ~
 coordinator:
   zomes:
@@ -21,8 +17,3 @@ coordinator:
       bundled: "../../../target/wasm32-unknown-unknown/release/place.wasm"
       dependencies:
         - name: place_integrity
-    - name: nft
-      hash: ~
-      bundled: "../../../target/wasm32-unknown-unknown/release/nft.wasm"
-      dependencies:
-        - name: nft_integrity

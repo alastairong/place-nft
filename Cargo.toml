@@ -8,23 +8,16 @@ opt-level = "z"
 members = ["dnas/*/zomes/coordinator/*", "dnas/*/zomes/integrity/*"]
 
 [workspace.dependencies]
-hdi = "=0.2.1"
-hdk = "=0.1.1"
+hdi = "=0.2.2"
+hdk = "=0.1.2"
 serde = "1"
-zome_utils = { git = "https://github.com/alastairong/zome-utils", branch = "beta.1.1" }
-image = "0.24.6"
+zome_utils = { git = "https://github.com/ddd-mtl/zome-utils", branch = "hdk-1.2" }
+image = { version = "0.24.6", default-features = false }
 imageproc = "0.23.0"
 rusttype = "0.9.3"
-
 
 [workspace.dependencies.place]
 path = "dnas/place_nft/zomes/coordinator/place"
 
 [workspace.dependencies.place_integrity]
 path = "dnas/place_nft/zomes/integrity/place"
-
-[workspace.dependencies.nft]
-path = "dnas/place_nft/zomes/coordinator/nft"
-
-[workspace.dependencies.nft_integrity]
-path = "dnas/place_nft/zomes/integrity/nft"

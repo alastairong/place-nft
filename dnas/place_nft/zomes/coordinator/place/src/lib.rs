@@ -8,7 +8,10 @@ mod snapshots;
 pub use snapshots::*;
 mod ranking;
 pub use ranking::*;
+// mod badge;
+// pub use badge::*;
 pub use place_integrity::*;
+
 
 /// Called the first time a zome call is made to the cell containing this zome
 #[hdk_extern]

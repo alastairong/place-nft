@@ -27,19 +27,24 @@ export type Placement = {
   pixel: number;
 }
 
-export interface DestructuredPlacement {
+export type DestructuredPlacement = {
   x: number;
   y: number;
   colorIndex: number;
 }
 
-export interface Snapshot {
+export type Snapshot = {
   imageData: Uint8Array; // 2 x 4-bit pixels per u8
   placementCount: number; // Number of placements in this bucket
   bucketIndex: number; // Number of 'bucket_size_sec' since START.
 }
 
 export type DoublePixel = number;
+
+export type NftRecord = {
+  nftId: String,
+  contractAddress: String
+}
 
 export interface GetAuthorRankInput {
   author: AgentPubKey
@@ -54,6 +59,13 @@ export interface GenerateBadgeInput {
 export interface GenerateHrlInput {
   badgeAction: ActionHash
 }
+
+export interface SaveNftInput {
+  nftId: String,
+  contractAddress: String,
+  hrl: String
+};
+
 
 /** DEBUGGING API */
 export interface PlaceAtInput {
