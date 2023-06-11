@@ -8,8 +8,8 @@ mod snapshots;
 pub use snapshots::*;
 mod ranking;
 pub use ranking::*;
-// mod badge;
-// pub use badge::*;
+mod badge;
+pub use badge::*;
 pub use place_integrity::*;
 
 

@@ -7,10 +7,13 @@ fn get_badge_action(_: ()) -> ExternResult<Option<ActionHash>> {
     // If it does, return the hash of the action
     // let ZomeInfo {id, ..} = zome_info()?; // There's only 1 app entry def in this zome
     // let badge_app_entry_type = AppEntryDef::new(0.into(), id, EntryVisibility::Public);
+    debug!("Getting badge action");
     if let Ok(records) = &query(ChainQueryFilter::new().entry_type(UnitEntryTypes::Badge.try_into()?)) {
         if records.is_empty() {
+            debug!("No badge found");
             Ok(None)
         } else {
+            debug!("Badge found");
             let badge_action = records[0].action_address().clone();
             Ok(Some(badge_action))
         }
@@ -23,6 +26,7 @@ fn get_badge_action(_: ()) -> ExternResult<Option<ActionHash>> {
 
 #[hdk_extern]
 fn get_badge(action_hash: ActionHash) -> ExternResult<Vec<u8>> {
+    debug!("Getting badge at {:?}", action_hash);
     let maybe_record = get(action_hash, GetOptions::default())?;
     
     let badge = match maybe_record {

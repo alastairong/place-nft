@@ -41,6 +41,7 @@
   import '@material/mwc-circular-progress';
   // TODO: Placements outside of a snapshot are not currently rendered
   const GAME_START_TIME = 1686217362; // Must be updated to match DNA timestamp
+  const GAME_END_TIME = GAME_START_TIME + 23 * 60 * 60; // 23 hours after start time
   
   export default defineComponent({
     components: {
@@ -58,7 +59,7 @@
         error: undefined,
         timer: undefined,
         colors: COLOR_PALETTE,
-        finished: Date.now() > (GAME_START_TIME + 23 * 60 * 60) * 1000
+        finished: false
       }
     },
     created() {
@@ -68,8 +69,6 @@
       clearInterval(this.timer); // clear timer when component is destroyed
     },
     async mounted() {
-      console.log(Date.now())
-      console.log((GAME_START_TIME + 24 * 60 * 60) * 1000)
       this.calculateCurrentBucket();
       await this.loadInitialData();
       toRaw(this.client).on('signal', signal => {
@@ -85,8 +84,8 @@
       calculateCurrentBucket() {
           const now = new Date();
           const timeInSeconds = Math.round(now.getTime() / 1000); 
-          this.clock = timeInSeconds;
-          this.currentBucket = Math.floor((timeInSeconds - GAME_START_TIME) / (60 * 5));
+          this.clock = Math.min(timeInSeconds, GAME_END_TIME);
+          this.currentBucket = Math.floor((this.clock - GAME_START_TIME) / (60 * 5));
           console.log("Current bucket: " + this.currentBucket);
       },
 
@@ -103,6 +102,7 @@
             }
             this.placementsSinceLatestSnapshot = await this.happ.getPlacementsAt(this.currentBucket); // get placements at the current bucket
             this.loading = false;
+            this.finished = Date.now() > GAME_END_TIME * 1000;
           } catch (e) {
               console.log(e);
           }
@@ -161,10 +161,8 @@
           // update clock and check if we've moved to a new bucket
           const now = new Date();
           const timeInSeconds = Math.round(now.getTime() / 1000); 
-          this.clock = timeInSeconds;
-          const bucket = Math.floor((timeInSeconds - GAME_START_TIME) / (60 * 5));
-          // TODO: Make this call conditional so it doesn't always re-pull the latest snapshot
-          this.currentBucket = bucket;
+          this.clock = Math.min(timeInSeconds, GAME_END_TIME);
+          const bucket = Math.floor((this.clock - GAME_START_TIME) / (60 * 5));
           try {
             // See if there's a new snapshot
             let newSnapshot = await this.happ.getSnapshotAt(bucket);
@@ -172,6 +170,7 @@
               this.latestSnapshot = newSnapshot;
               this.placementsSinceLatestSnapshot = await this.happ.getPlacementsAt(bucket);
               // console.log("Placements since latest snapshot: " + JSON.stringify(this.placementsSinceLatestSnapshot));
+              this.currentBucket = bucket;
             } else {
               await this.tryPublish();
             }
@@ -241,6 +240,7 @@
           this.grid = updateGrid(baseImageData, newPlacements); // unpack grid data
         }
       },
+
       finished(newValue) { 
         if (newValue) {
           clearInterval(this.timer); // cancel the timer when game is finished

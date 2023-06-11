@@ -25,7 +25,7 @@ pub struct GetPlacementAuthorInput {
 #[hdk_extern]
 pub fn get_author_rank(input: GetAuthorRankInput) -> ExternResult<u16> {
   std::panic::set_hook(Box::new(zome_panic_hook));
-  debug!("*** get_author_rank() CALLED");
+  // debug!("*** get_author_rank() CALLED");
   let mut placement_links = get_links(
     bucket_index_to_path(input.bucket_index).path_entry_hash()?,
     LinkTypes::PlacementLink,
@@ -34,7 +34,7 @@ pub fn get_author_rank(input: GetAuthorRankInput) -> ExternResult<u16> {
   // debug!("*** get_author_rank() placement_links: {:?}", placement_links);
 
   if placement_links.len() == 0 {
-    debug!("*** get_author_rank() no placement_links found");
+    // debug!("*** get_author_rank() no placement_links found");
     return Ok(0);
   }
 

@@ -42,9 +42,10 @@
   import { CONTRACT_ADDRESS } from './ethereum/consts'
   import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action } from '@holochain/client';
   import { NftRecord } from './place_nft/types';
-  import { EthereumProvider } from '@walletconnect/ethereum-provider';
   import { ethers } from "ethers";
   import contractArtifact from '../../contract/artifacts/contracts/place_nft.sol/placeNFT.json';
+  import WalletConnectProvider from "@walletconnect/web3-provider";
+
   
 
   // Main page logic
@@ -70,20 +71,13 @@
       console.log("got badge Image: " + this.badgeImageRaw)
       this.loading = false
       console.log("Initializing wallet provider")
-      try {
-        this.walletProvider = await EthereumProvider.init({
-          projectId: "3a9ef680dcb4795af0014281b0ddc95f",
-          showQrModal: true,
-          qrModalOptions: { themeMode: 'dark' },
-          chains: [5], // Goerli https://eips.ethereum.org/EIPS/eip-155#list-of-chain-ids
-          methods: ['eth_sendTransaction', 'personal_sign'],
-          events: ['connect', 'accountsChanged'],
-        })
-      } catch (e) {
-        console.log("Error initializing wallet provider: " + e)
-      }
+
+      this.walletProvider = new WalletConnectProvider({
+        infuraId: "a5238372835346588d9c347de0a2226e",
+      });
       console.log("test logging?")
       console.log(this.walletProvider)
+      
       console.log("Initialized wallet provider, listening for connection")
       this.walletProvider.on('connect', async () => {
         this.isWalletConnected = true
@@ -103,7 +97,14 @@
     },
     methods: {
       async getBadgeImage() {
-        this.badgeAction = await this.happ.getBadgeAction()
+        console.log("getting badge image")
+        try {
+          this.badgeAction = await this.happ.getBadgeAction()
+        } catch (e) {
+          console.log(e)
+        }
+        
+        
       
         if (!!this.badgeAction) {
           this.badgeImageRaw = await this.happ.getBadge(this.badgeAction)
@@ -136,9 +137,10 @@
         await this.happ.saveNft(nftId, CONTRACT_ADDRESS, this.hrl)
       },
 
-      connect() {
+      async connect() {
         // your connect logic here
-        this.walletProvider?.connect();
+        console.log("connecting");
+        await this.walletProvider.enable();
       },
 
       async createBadge() {
