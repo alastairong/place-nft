@@ -8,7 +8,7 @@ use crate::utils::*;
 
 #[hdk_extern]
 pub fn publish_starting_snapshot(_: ()) -> ExternResult<Option<Snapshot>> {
-    // debug!("*** publish_starting_snapshot() CALLED");
+    debug!("*** publish_starting_snapshot() CALLED");
     std::panic::set_hook(Box::new(zome_panic_hook));
     let first = Snapshot::create_first();
     publish_snapshot(&first)?;

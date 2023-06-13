@@ -40,20 +40,24 @@
   import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/utils';
   import '@material/mwc-circular-progress';
   // TODO: Placements outside of a snapshot are not currently rendered
-  const GAME_START_TIME = 1686522861; // Must be updated to match DNA timestamp
-  const GAME_END_TIME = GAME_START_TIME + 23 * 60 * 60; // 23 hours after start time
+  const GAME_START_TIME = 1686645549; // Must be updated to match DNA timestamp
+  const BUCKET_DURATION = 60 * 1; // 1 minutes
+  const BUCKETS_PER_HOUR = 60 * 60 / BUCKET_DURATION;
+  const HOURS_OF_GAMEPLAY = 1;
+  const GAME_END_TIME = GAME_START_TIME + HOURS_OF_GAMEPLAY * BUCKET_DURATION * BUCKETS_PER_HOUR;
   
   export default defineComponent({
     components: {
       Minter
     },
-    data(): { grid: String[]; selectedColor: String; clock: number; currentBucket: number; latestSnapshot: Snapshot | undefined; placementsSinceLatestSnapshot: Array<Placement>; loading: boolean; error: any; timer: any; colors: String[]; finished: boolean} {
+    data(): { grid: String[]; selectedColor: String; clock: number; currentBucket: number; latestSnapshot: Snapshot | undefined; latestSnapshotBucket: number; placementsSinceLatestSnapshot: Array<Placement>; loading: boolean; error: any; timer: any; colors: String[]; finished: boolean} {
       return {
         grid: Array(16384).fill("#ffffff"), // Create a grid of 100x100 cells and set their background color to white
         selectedColor: "#ffffff", // Initialize the selected color to white
         clock: 0,
         currentBucket: 0,
         latestSnapshot: undefined,
+        latestSnapshotBucket: -1,
         placementsSinceLatestSnapshot: [],
         loading: true,
         error: undefined,
@@ -85,7 +89,7 @@
           const now = new Date();
           const timeInSeconds = Math.round(now.getTime() / 1000); 
           this.clock = Math.min(timeInSeconds, GAME_END_TIME);
-          this.currentBucket = Math.floor((this.clock - GAME_START_TIME) / (60 * 5));
+          this.currentBucket = Math.floor((this.clock - GAME_START_TIME) / BUCKET_DURATION);
           console.log("Current bucket: " + this.currentBucket);
       },
 
@@ -99,6 +103,7 @@
               await this.catchUpToCurrentSnapshot();  // if there's no snapshot, find the most recent one and publish old snapshots until now
             } else {
               this.latestSnapshot = maybeSnapshot;
+              this.latestSnapshotBucket = this.currentBucket;
             }
             this.placementsSinceLatestSnapshot = await this.happ.getPlacementsAt(this.currentBucket); // get placements at the current bucket
             this.loading = false;
@@ -119,6 +124,7 @@
           let snapshot = await this.happ.getSnapshotAt(bucket);
           if (snapshot) {
             this.latestSnapshot = snapshot;
+            this.latestSnapshotBucket = this.currentBucket;
             break;
           }
         };
@@ -129,6 +135,7 @@
 
           if (maybeSnapshot !== null) {
             this.latestSnapshot = maybeSnapshot;
+            this.latestSnapshotBucket = 0;
             console.log("Published starting snapshot: " + this.latestSnapshot);
           } else {
             console.log("Error publishing starting snapshot");
@@ -142,6 +149,7 @@
           const maybeSnapshot = await this.happ.publishSnapshotAt(bucket);
           if (maybeSnapshot !== null) {
             this.latestSnapshot = maybeSnapshot;
+            this.latestSnapshotBucket = bucket;
             console.log("Published snapshot: " + this.latestSnapshot);
           } else {
             console.log("Error publishing snapshot");
@@ -154,29 +162,37 @@
         }
       },
 
-      // In this function, we only update the bucket once we have a new snapshot. This keeps the bucket
-      // in sync with the snapshot, and acts as a flag for having a latest snapshot.
       async updateData() {
         console.log("Updating data at bucket " + this.currentBucket + " at " + Date.now());
           // update clock and check if we've moved to a new bucket
           const now = new Date();
           const timeInSeconds = Math.round(now.getTime() / 1000); 
           this.clock = Math.min(timeInSeconds, GAME_END_TIME);
-          const bucket = Math.floor((this.clock - GAME_START_TIME) / (60 * 5));
-          this.currentBucket = bucket;
-          try {
-            // See if there's a new snapshot
-            let newSnapshot = await this.happ.getSnapshotAt(bucket);
-            if (newSnapshot) {
-              this.latestSnapshot = newSnapshot;
-              this.placementsSinceLatestSnapshot = await this.happ.getPlacementsAt(bucket);
-              // console.log("Placements since latest snapshot: " + JSON.stringify(this.placementsSinceLatestSnapshot));
-            } else {
-              await this.tryPublish();
-            }
-          } catch (e) {
-            console.log(e);
+          const bucket = Math.floor((this.clock - GAME_START_TIME) / BUCKET_DURATION);
+          
+          // move to new bucket if changed
+          if (bucket != this.currentBucket) {
+            console.log("Moving to new bucket " + bucket);
+            this.currentBucket = bucket;
+          } else {
+            console.log("Still at bucket " + bucket);
           }
+          
+          if (this.latestSnapshotBucket < this.currentBucket) {
+            try {    
+              let newSnapshot = await this.happ.getSnapshotAt(bucket);
+              if (newSnapshot) {
+                this.latestSnapshot = newSnapshot;
+                this.placementsSinceLatestSnapshot = await this.happ.getPlacementsAt(bucket);
+                // console.log("Placements since latest snapshot: " + JSON.stringify(this.placementsSinceLatestSnapshot));
+              } else {
+                await this.tryPublish();
+              }
+            } catch (e) {
+              console.log(e);
+            }
+          }
+          
       },
 
       async placePixel(index: number) { 
@@ -207,9 +223,9 @@
         }
         console.log("CurrentBucket is " + this.currentBucket)
         console.log("Rank is " + rank)
-        let secondsInBucket = (this.clock - GAME_START_TIME) - (this.currentBucket * (5 * 60)); 
+        let secondsInBucket = (this.clock - GAME_START_TIME) - (this.currentBucket * BUCKET_DURATION); 
         console.log("Seconds in bucket is " + secondsInBucket)
-        if (rank <= Math.floor(secondsInBucket/10) || secondsInBucket > 150) {
+        if (rank <= Math.floor(secondsInBucket/2) || secondsInBucket > 20) {
           console.log("Publishing snapshot at bucket " + this.currentBucket + "...")
           const snapshot = await this.happ.publishSnapshotAt(this.currentBucket);
           if (snapshot) {
@@ -217,6 +233,7 @@
             this.placementsSinceLatestSnapshot = [];
           }
         } else {
+          console.log("Rank too low / not enough time elapsed to publish")
           return
         }
       },

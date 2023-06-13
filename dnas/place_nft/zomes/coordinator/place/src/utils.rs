@@ -3,7 +3,8 @@ use hdk::hash_path::path::{TypedPath, Component};
 use place_integrity::globals::*;
 
 
-// This game will last exactly 24 hours. Each bucket is 5 minutes. Path will be relative to a game start time = 0. I.e. /root/hour/bucket e.g. /root/23/11
+//Path will be relative to a game start time = 0 with 12 subdivisions
+// I.e. /root/hour/bucket e.g. /root/11/11
 pub const ROOT: &'static str = "root";
 
 /// Determine bucket path from time in sec
@@ -13,18 +14,19 @@ pub fn get_path(now: u32) -> Path {
    // debug!("sec_since_start_of_game is: {}", sec_since_start_of_game);
    // assert!(sec_since_start_of_game < 24 * 3600); // removed now that we can have a finished game for minting
 
-   // create hour path component
-   let hour_index = sec_since_start_of_game / (60 * 60); 
-   let hour = Component::from(format!("{}", hour_index).as_str());
+   
 
    // create bucket path component
    let buckets_since_start = sec_since_start_of_game / BUCKET_SIZE_SEC;
-   let buckets_per_hour = 3600 / BUCKET_SIZE_SEC;
-   let bucket_in_hour = buckets_since_start % buckets_per_hour;
-   let bucket = Component::from(format!("{}", bucket_in_hour));
+   let subdivision_index = buckets_since_start / 12;
+   let subdivision = Component::from(format!("{}", subdivision_index).as_str());
+   
+   let bucket_in_subdivision = buckets_since_start % 12;
+   let bucket = Component::from(format!("{}", bucket_in_subdivision));
+   
 
    let mut path = Path::from(ROOT);
-   path.append_component(hour);
+   path.append_component(subdivision);
    path.append_component(bucket);
      //debug!("get_path({}); bucket_path = {}", now, path_to_str(&bucket_path));
    
