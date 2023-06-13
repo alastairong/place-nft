@@ -40,6 +40,7 @@ fn get_badge(action_hash: ActionHash) -> ExternResult<Vec<u8>> {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]
+#[serde(rename_all = "camelCase")]
 pub struct GenerateBadgeInput {
     eth_address: String,
     eth_signed_contents: String,
@@ -48,8 +49,9 @@ pub struct GenerateBadgeInput {
 #[hdk_extern]
 fn generate_badge(input: GenerateBadgeInput) -> ExternResult<ActionHash> {
     // Get final snapshot
+    debug!("Generate badge input is: {:?}", input);
     let final_bucket: u32 = 24 * 12; // 12 buckets per hour and 24 hours in this game
-
+    debug!("Getting final snapshot at bucket {:?}", final_bucket);
     let final_snapshot_result: Result<Snapshot, WasmError> = call(
         CallTargetCell::Local,
         ZomeName("place".into()),
@@ -98,6 +100,7 @@ fn generate_badge(input: GenerateBadgeInput) -> ExternResult<ActionHash> {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]
+#[serde(rename_all = "camelCase")]
 pub struct GenerateHrlInput {
     badge_action: ActionHash,
 }
@@ -151,6 +154,7 @@ fn generate_hrl(input: GenerateHrlInput) -> ExternResult<String> {
 
 
 #[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]
+#[serde(rename_all = "camelCase")]
 pub struct SaveNftInput {
     nft_id: String,
     contract_address: String,

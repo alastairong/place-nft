@@ -45,12 +45,12 @@
   import { ethers } from "ethers";
   import contractArtifact from '../../contract/artifacts/contracts/place_nft.sol/placeNFT.json';
   import WalletConnectProvider from "@walletconnect/web3-provider";
-
+  import { markRaw } from 'vue';
   
 
   // Main page logic
   export default defineComponent({
-    data(): { loading: boolean; error: any, badgeAction: ActionHash | null, badgeImageRaw: any, badgeImage: any, walletProvider: any, signer: any, hrl: string, nftRecord: NftRecord | null, isWalletConnected: Boolean, walletAddress: string } {
+    data(): { loading: boolean; error: any, badgeAction: ActionHash | null, badgeImageRaw: any, badgeImage: any, walletProvider: any, signer: any, hrl: string, nftRecord: NftRecord | null, isWalletConnected: Boolean, walletAddress: any } {
       return {
         loading: true,
         error: undefined,
@@ -62,7 +62,7 @@
         hrl: "",
         nftRecord: null,
         isWalletConnected: false,
-        walletAddress: "",
+        walletAddress: null,
       }
     },
     async mounted() {
@@ -72,26 +72,20 @@
       this.loading = false
       console.log("Initializing wallet provider")
 
-      this.walletProvider = new WalletConnectProvider({
+      const provider = new WalletConnectProvider({
         infuraId: "a5238372835346588d9c347de0a2226e",
       });
-      console.log("test logging?")
-      console.log(this.walletProvider)
-      
+      this.walletProvider = markRaw(provider);
+      // console.log("Close any existing connection")
+      // this.walletProvider.disconnect();
+      // console.log("test logging?")
+      // console.log(this.walletProvider)
+      // console.log("test logging with ", this.walletProvider.connected)
+      // console.log("test logging with2 ", this.walletProvider.accounts[0])
+      this.isWalletConnected = this.walletProvider.connected;
       console.log("Initialized wallet provider, listening for connection")
       this.walletProvider.on('connect', async () => {
         this.isWalletConnected = true
-        console.log("Wallet connected, creating ethers provider")
-        const provider = new ethers.providers.Web3Provider(this.walletProvider);
-        console.log("Getting ethers signer object")
-        this.signer = provider.getSigner();
-        console.log("Got ethers signer object: " + this.signer)
-        this.walletAddress = this.signer.getAddress()
-        console.log("Got wallet address: " + this.walletAddress)
-        if (!!this.badgeAction) {
-          this.hrl = this.badgeAction + this.walletAddress
-          this.nftRecord = await this.happ.getNft(this.hrl)
-        }
       })
       
     },
@@ -104,8 +98,6 @@
           console.log(e)
         }
         
-        
-      
         if (!!this.badgeAction) {
           this.badgeImageRaw = await this.happ.getBadge(this.badgeAction)
         }
@@ -141,11 +133,29 @@
         // your connect logic here
         console.log("connecting");
         await this.walletProvider.enable();
+        console.log(this.walletProvider)
+        console.log("test logging with ", this.walletProvider.connected)
+        console.log("test logging with2 ", this.walletProvider.accounts[0])
+        this.isWalletConnected = this.walletProvider.connected;
       },
 
       async createBadge() {
-        this.badgeAction = await this.happ.generateBadgeImage(this.walletAddress, "Signed Placeholder")
-        this.badgeImageRaw = await this.happ.getBadge(this.badgeAction)
+        try { 
+          console.log("creating badge")
+          this.badgeAction = await this.happ.generateBadgeImage(this.walletAddress, "Signed Placeholder")
+        } catch (e) {
+          console.log(e)
+        }
+        
+        try {
+          console.log("fetching and storing badge")
+          if(!!this.badgeAction) {
+            this.badgeImageRaw = await this.happ.getBadge(this.badgeAction)
+          }
+          
+        } catch (e) {
+          console.log(e)
+        }
       },
 
     },
@@ -166,6 +176,30 @@
           this.hrl = this.badgeAction + newWalletAddress;
         }
       },
+
+      async isWalletConnected(newValue) {
+        if (newValue) {
+          console.log("Wallet connected, creating ethers provider")
+          const provider = new ethers.providers.Web3Provider(this.walletProvider);
+          console.log("Getting ethers signer object")
+          const signer = provider.getSigner();
+          this.signer = markRaw(signer);
+          console.log("Got ethers signer object: " + this.signer)
+          try {
+            console.log("Getting wallet address")
+            this.walletAddress = await this.signer.getAddress()
+          } catch (e) {
+            console.log(e)
+          }
+          console.log("test logging with2 ", this.walletProvider.accounts[0])
+          console.log("Got wallet address: " + this.walletAddress)
+          if (!!this.badgeAction) {
+            console.log("Blah")
+            this.hrl = this.badgeAction + this.walletAddress
+            this.nftRecord = await this.happ.getNft(this.hrl)
+          }
+        }
+      }
     },
 
     setup() {
