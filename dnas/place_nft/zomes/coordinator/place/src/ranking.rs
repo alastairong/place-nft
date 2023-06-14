@@ -45,7 +45,7 @@ pub fn get_author_rank(input: GetAuthorRankInput) -> ExternResult<u16> {
    */
  
   let mut i = 1;
-  debug!("*** get_author_rank() iterating to check author rank");
+  // debug!("*** get_author_rank() iterating to check author rank");
   for link in placement_links.iter() {
     let author_bytes = link.author.clone().into_inner();
     // debug!("*** get_author_rank() author_bytes: {:?}", author_bytes);

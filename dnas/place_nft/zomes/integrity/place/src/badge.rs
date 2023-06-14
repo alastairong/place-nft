@@ -137,3 +137,5 @@ const COLOR_PALETTE: [&str; 16] = [
    "#DE64EA",
    "#8E0A85",
 ];
+
+

@@ -46,7 +46,7 @@ impl Snapshot {
  
  /// Apply placements to 'image_data'
  pub fn apply_pixels_to_canvas(image_data: &mut Vec<DoublePixel>, placements: Vec<Placement>) {
-    debug!("apply_pixels_to_canvas(): {} placements", placements.len());
+   //  debug!("apply_pixels_to_canvas(): {} placements", placements.len());
     for placement in placements {
        //debug!("placing: {:?} | {}", placement, placement.index());
        let index: usize = (placement.index(CANVAS_SIZE) / 2) as usize;

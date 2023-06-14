@@ -23,7 +23,7 @@ pub fn publish_starting_snapshot(_: ()) -> ExternResult<Option<Snapshot>> {
 // (i.e. it's just replaying the same moves)
 #[hdk_extern]
 pub fn publish_snapshot_at(bucket: u32) -> ExternResult<Option<Snapshot>> {
-    // debug!("*** publish_snapshot_at({}) CALLED", bucket);
+    debug!("*** publish_snapshot_at({}) CALLED", bucket);
     std::panic::set_hook(Box::new(zome_panic_hook));
 
     let maybe_current = get_snapshot_at(bucket)?;
@@ -79,7 +79,7 @@ pub fn publish_snapshot(snapshot: &Snapshot) -> ExternResult<ActionHash> {
     // Link to current bucket
     let path = bucket_index_to_path(snapshot.bucket_index);
     let author = agent_info()?.agent_latest_pubkey;
-    // debug!("Publishing snapshot at index {}, path: {}", snapshot.bucket_index , path_to_str(&path.clone().typed(LinkTypes::SnapshotLink)?));
+    debug!("Publishing snapshot at index {}, path: {}", snapshot.bucket_index , path_to_str(&path.clone().typed(LinkTypes::SnapshotLink)?));
     let _ = create_link(
         path.path_entry_hash()?, 
         entry_hash,

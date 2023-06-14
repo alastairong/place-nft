@@ -40,7 +40,7 @@
   import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/utils';
   import '@material/mwc-circular-progress';
   // TODO: Placements outside of a snapshot are not currently rendered
-  const GAME_START_TIME = 1686645549; // Must be updated to match DNA timestamp
+  const GAME_START_TIME = 1686731934; // Must be updated to match DNA timestamp
   const BUCKET_DURATION = 60 * 1; // 1 minutes
   const BUCKETS_PER_HOUR = 60 * 60 / BUCKET_DURATION;
   const HOURS_OF_GAMEPLAY = 1;
@@ -167,6 +167,8 @@
           // update clock and check if we've moved to a new bucket
           const now = new Date();
           const timeInSeconds = Math.round(now.getTime() / 1000); 
+          this.finished = timeInSeconds > GAME_END_TIME;
+
           this.clock = Math.min(timeInSeconds, GAME_END_TIME);
           const bucket = Math.floor((this.clock - GAME_START_TIME) / BUCKET_DURATION);
           
@@ -225,7 +227,7 @@
         console.log("Rank is " + rank)
         let secondsInBucket = (this.clock - GAME_START_TIME) - (this.currentBucket * BUCKET_DURATION); 
         console.log("Seconds in bucket is " + secondsInBucket)
-        if (rank <= Math.floor(secondsInBucket/2) || secondsInBucket > 20) {
+        if ((rank - 1) <= Math.floor(secondsInBucket/2) || secondsInBucket > 20 ) {
           console.log("Publishing snapshot at bucket " + this.currentBucket + "...")
           const snapshot = await this.happ.publishSnapshotAt(this.currentBucket);
           if (snapshot) {

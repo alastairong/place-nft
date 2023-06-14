@@ -50,7 +50,7 @@ pub struct GenerateBadgeInput {
 fn generate_badge(input: GenerateBadgeInput) -> ExternResult<ActionHash> {
     // Get final snapshot
     debug!("Generate badge input is: {:?}", input);
-    let final_bucket: u32 = 24 * 12; // 12 buckets per hour and 24 hours in this game
+    let final_bucket: u32 = HOURS_OF_GAMEPLAY * 60 * 60 / BUCKET_SIZE_SEC;
     debug!("Getting final snapshot at bucket {:?}", final_bucket);
     let final_snapshot_result: Result<Snapshot, WasmError> = call(
         CallTargetCell::Local,
@@ -156,7 +156,7 @@ fn generate_hrl(input: GenerateHrlInput) -> ExternResult<String> {
 #[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]
 #[serde(rename_all = "camelCase")]
 pub struct SaveNftInput {
-    nft_id: String,
+    nft_id: u32,
     contract_address: String,
     hrl: String,
 }

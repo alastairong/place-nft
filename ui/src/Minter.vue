@@ -40,7 +40,7 @@
   import { Interface } from './place_nft/interface';
   import '@material/mwc-circular-progress';
   import { CONTRACT_ADDRESS } from './ethereum/consts'
-  import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action } from '@holochain/client';
+  import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action, encodeHashToBase64 } from '@holochain/client';
   import { NftRecord } from './place_nft/types';
   import { ethers } from "ethers";
   import contractArtifact from '../../contract/artifacts/contracts/place_nft.sol/placeNFT.json';
@@ -111,22 +111,34 @@
         
         // instantiate smart contract
         const nftContractInstance = new ethers.Contract(CONTRACT_ADDRESS, contractArtifact.abi, this.signer);
-        
-        // make call to smart contract method 
-        const tx = await nftContractInstance.mintNft(this.badgeAction); // make contract call
-        const receipt = await tx.wait(); // wait for tx to be mined
-        
-        // look for broadcasted event with nftId
-        const event = receipt.events.find((event: any) => event.event === 'Minted');
-        const newItemId = event.args.newItemId;
-        const nftId = newItemId.toNumber();
-
-        this.nftRecord = {
-          nftId,
-          contractAddress: CONTRACT_ADDRESS
+        console.log("nftContractInstance")
+        console.log(nftContractInstance)
+        // make call to smart contract method
+        try {
+          if (!!this.badgeAction) {
+            const tx = await nftContractInstance.mintNFT(encodeHashToBase64(this.badgeAction)); // make contract call
+            console.log("tx")
+            console.log(tx)
+            const receipt = await tx.wait(); // wait for tx to be mined
+            console.log("receipt")
+            console.log(receipt)
+            // look for broadcasted event with nftId
+            const event = receipt.events.find((event: any) => event.event === 'Minted');
+            const newItemId = event.args.newItemId;
+            const nftId = newItemId.toNumber();
+            console.log("nftId: ", nftId)
+            this.nftRecord = {
+              nftId,
+              contractAddress: CONTRACT_ADDRESS
+            }
+            console.log("saving nft")
+            console.log(this.hrl)
+            await this.happ.saveNft(nftId, CONTRACT_ADDRESS, this.hrl)
+          }
+             
+        } catch (e){
+          console.log(e)
         }
-        
-        await this.happ.saveNft(nftId, CONTRACT_ADDRESS, this.hrl)
       },
 
       async connect() {
@@ -166,14 +178,14 @@
       },
 
       badgeAction(newBadgeAction) {
-        if (!!this.walletAddress) {
-          this.hrl = newBadgeAction + this.walletAddress;
+        if (!!this.walletAddress && newBadgeAction) {
+          this.hrl = encodeHashToBase64(newBadgeAction) + this.walletAddress;
         }
       },
 
       walletAddress(newWalletAddress) {
         if (!!this.badgeAction) {
-          this.hrl = this.badgeAction + newWalletAddress;
+          this.hrl = encodeHashToBase64(this.badgeAction) + newWalletAddress;
         }
       },
 
@@ -195,8 +207,12 @@
           console.log("Got wallet address: " + this.walletAddress)
           if (!!this.badgeAction) {
             console.log("Blah")
-            this.hrl = this.badgeAction + this.walletAddress
-            this.nftRecord = await this.happ.getNft(this.hrl)
+            this.hrl = encodeHashToBase64(this.badgeAction) + this.walletAddress
+            try {
+              this.nftRecord = await this.happ.getNft(this.hrl)
+            } catch (e) {
+              console.log(e)
+            }
           }
         }
       }

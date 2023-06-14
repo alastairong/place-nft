@@ -7,7 +7,7 @@ use crate::utils::*;
 /// Add placement to current bucket
 #[hdk_extern]
 pub fn place_pixel(input: DestructuredPlacement) -> ExternResult<ActionHash> {
-   debug!("*** place_pixel() CALLED: {:?}", input);
+//    debug!("*** place_pixel() CALLED: {:?}", input);
    std::panic::set_hook(Box::new(zome_panic_hook));
    // Make sure not already placed
    let now = now();
@@ -22,7 +22,7 @@ pub fn place_pixel(input: DestructuredPlacement) -> ExternResult<ActionHash> {
    let action_hash = create_entry(EntryTypes::Placement(placement.clone()))?;
    // Link to current bucket path
    let entry_hash = hash_entry(placement)?;
-   debug!("*** place_pixel() path: {}", path_to_str(&path.clone().typed(LinkTypes::PlacementLink)?));
+//    debug!("*** place_pixel() path: {}", path_to_str(&path.clone().typed(LinkTypes::PlacementLink)?));
    let _ = create_link(
       path.path_entry_hash()?,
       entry_hash,
