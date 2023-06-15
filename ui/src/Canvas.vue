@@ -23,9 +23,7 @@
       </div>
       <div v-if="finished">
         <div class="overlay"></div> <!--if this doesn't cover enough, move this to top level and add v-if condition -->
-        <div class="modal">
           <Minter></Minter>
-        </div>
       </div>
     </div>
   
@@ -40,7 +38,7 @@
   import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/utils';
   import '@material/mwc-circular-progress';
   // TODO: Placements outside of a snapshot are not currently rendered
-  const GAME_START_TIME = 1686731934; // Must be updated to match DNA timestamp
+  const GAME_START_TIME = 1686833278; // Must be updated to match DNA timestamp
   const BUCKET_DURATION = 60 * 1; // 1 minutes
   const BUCKETS_PER_HOUR = 60 * 60 / BUCKET_DURATION;
   const HOURS_OF_GAMEPLAY = 1;
@@ -227,7 +225,7 @@
         console.log("Rank is " + rank)
         let secondsInBucket = (this.clock - GAME_START_TIME) - (this.currentBucket * BUCKET_DURATION); 
         console.log("Seconds in bucket is " + secondsInBucket)
-        if ((rank - 1) <= Math.floor(secondsInBucket/2) || secondsInBucket > 20 ) {
+        if ((rank - 1) <= Math.floor(secondsInBucket/2) || secondsInBucket > 20 || this.currentBucket * BUCKET_DURATION + GAME_START_TIME >= GAME_END_TIME) {
           console.log("Publishing snapshot at bucket " + this.currentBucket + "...")
           const snapshot = await this.happ.publishSnapshotAt(this.currentBucket);
           if (snapshot) {
@@ -342,6 +340,7 @@
       background-color: white;
       padding: 20px;
       border: 1px solid #ccc;
+      width: 80%;
     }
 
     w3m-modal {

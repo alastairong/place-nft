@@ -46,6 +46,12 @@ export type NftRecord = {
   contractAddress: String
 }
 
+export interface NftTokenUri {
+  nftId: string;
+  hrl: string | undefined;
+}
+
+
 export interface GetAuthorRankInput {
   author: AgentPubKey
   bucketIndex: number
@@ -63,7 +69,8 @@ export interface GenerateHrlInput {
 export interface SaveNftInput {
   nftId: String,
   contractAddress: String,
-  hrl: String
+  hrl: String,
+  badgeAction: ActionHash
 };
 
 

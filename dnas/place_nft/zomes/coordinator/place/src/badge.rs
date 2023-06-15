@@ -1,8 +1,10 @@
 use hdk::prelude::*;
 use place_integrity::*;
+use zome_utils::{zome_panic_hook, error, get_typed_from_links};
 
 #[hdk_extern]
 fn get_badge_action(_: ()) -> ExternResult<Option<ActionHash>> {
+    std::panic::set_hook(Box::new(zome_panic_hook));
     // Search if they already have committed their badge. It should be on their chain
     // If it does, return the hash of the action
     // let ZomeInfo {id, ..} = zome_info()?; // There's only 1 app entry def in this zome
@@ -26,6 +28,7 @@ fn get_badge_action(_: ()) -> ExternResult<Option<ActionHash>> {
 
 #[hdk_extern]
 fn get_badge(action_hash: ActionHash) -> ExternResult<Vec<u8>> {
+    std::panic::set_hook(Box::new(zome_panic_hook));
     debug!("Getting badge at {:?}", action_hash);
     let maybe_record = get(action_hash, GetOptions::default())?;
     
@@ -107,7 +110,7 @@ pub struct GenerateHrlInput {
 
 #[hdk_extern]
 fn generate_hrl(input: GenerateHrlInput) -> ExternResult<String> {
-    
+    std::panic::set_hook(Box::new(zome_panic_hook));
     if let Some(record) = get(input.badge_action.clone(), Default::default())? { // Confirms that this badge exists
         
         // Extract info for HRL
@@ -159,20 +162,30 @@ pub struct SaveNftInput {
     nft_id: u32,
     contract_address: String,
     hrl: String,
+    badge_action: ActionHash,
 }
 
 #[hdk_extern]
 fn save_nft(input: SaveNftInput) -> ExternResult<ActionHash> {
+    std::panic::set_hook(Box::new(zome_panic_hook));
     let nft_record = NftRecord::new(input.nft_id, input.contract_address);
     let action_hash = create_entry(EntryTypes::NftRecord(nft_record.clone()))?;
     
-    // Create link from HRL to NFT
+    // Create link from HRL to NFT, for verification purposes
     let hrl_anchor = get_anchor_typed_path(&input.hrl)?;
     create_link(
-        hrl_anchor.path_entry_hash()?,         
+        hrl_anchor.clone().path_entry_hash()?,         
         action_hash.clone(),       
-        links::BadgetoHRLLink::link_type(),
-        links::BadgetoHRLLink::link_tag(),
+        links::HRLtoNftIdLink::link_type(),
+        links::HRLtoNftIdLink::link_tag(),
+    )?;
+
+    // and from HRL to badge, for viewing purpose
+    create_link(
+        hrl_anchor.path_entry_hash()?,         
+        input.badge_action,       
+        links::HRLtoBadgeLink::link_type(),
+        links::HRLtoBadgeLink::link_tag(),
     )?;
 
     Ok(action_hash)
@@ -180,6 +193,7 @@ fn save_nft(input: SaveNftInput) -> ExternResult<ActionHash> {
 
 #[hdk_extern]
 fn get_nft(hrl: String) -> ExternResult<Option<NftRecord>> { // retrieve the registered NFT for a given HRL
+    std::panic::set_hook(Box::new(zome_panic_hook));
     let hrl_anchor = get_anchor_typed_path(&hrl)?;
     let links_result = get_links(
         hrl_anchor.path_entry_hash()?,         
@@ -202,6 +216,34 @@ fn get_nft(hrl: String) -> ExternResult<Option<NftRecord>> { // retrieve the reg
             },
             None => Ok(None)
         }           
+    }
+}
+
+#[hdk_extern]
+fn view_nft_image(hrl: String) -> ExternResult<Option<Vec<u8>>> { // retrieve the badge image for a given HRL
+    std::panic::set_hook(Box::new(zome_panic_hook));
+    let hrl_anchor = get_anchor_typed_path(&hrl)?;
+    let links_result = get_links(
+        hrl_anchor.path_entry_hash()?,         
+        LinkTypes::HRLtoBadgeLink,
+        None
+    )?;
+
+    if links_result.is_empty() {
+        Ok(None)
+    } else {
+        let target: ActionHash = ActionHash::from(links_result[0].target.clone()).into(); // There should only be one link
+        
+        let maybe_record = get(target, GetOptions::default())?;
+    
+        let badge = match maybe_record {
+            Some(record) => record.entry().to_app_option::<Badge>().unwrap().unwrap(),
+            None => return Err(wasm_error!(WasmErrorInner::Guest(
+                "No badge exists at that address".into()
+            ))),
+        };
+
+        Ok(Some(badge.image_data))
     }
 }
 

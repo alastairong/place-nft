@@ -136,11 +136,12 @@ export class Interface {
         });
     }
 
-    async saveNft(nftId: String, contractAddress: String, hrl: String): Promise<ActionHash> {
+    async saveNft(nftId: String, contractAddress: String, hrl: String, badgeAction: ActionHash): Promise<ActionHash> {
         const payload: SaveNftInput = {
             nftId,
             contractAddress,
-            hrl
+            hrl,
+            badgeAction
         };
 
           return this.client.callZome({
@@ -163,5 +164,13 @@ export class Interface {
         });
     }
 
-    
+    async viewNftImage(hrl: String): Promise<Uint8Array | null> { 
+        return this.client.callZome({
+            cap_secret: null,
+            role_name: 'place_nft',
+            zome_name: 'place',
+            fn_name: 'view_nft_image',
+            payload: hrl,
+        });
+    }
 }

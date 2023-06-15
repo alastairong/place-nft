@@ -12,12 +12,12 @@
             <h2>Please connect your wallet to proceed</h2>
             <button @click="connect">Connect Wallet</button>
           </div>
-          <div v-if="isWalletConnected && !badgeImage">
+          <div v-if="isWalletConnected && !badgeAction">
             <p>No badge found. If you have participated in the game you can create an badge</p>
             <p>and NFT based on your contribution</p>
             <button @click="createBadge">Create Badge</button>
           </div>
-          <div v-if="isWalletConnected && !!badgeImage"> 
+          <div v-if="isWalletConnected && !!badgeAction"> 
             <img v-bind:src="badgeImage" />
             <div v-if="!nftRecord">
               <p>A badge has been found but no corresponding NFT</p>
@@ -25,9 +25,23 @@
               <button @click="mintNft">Mint NFT</button>
             </div>
             <div v-if="!!nftRecord">
-              <p> Your NFT has already been minted. You can find it here:</p>
-              <p>PLACEHOLDER: Link to NFT based on NFTID? BY USING THE BADGE ACTION TO CALCULATE THE HRL AND FIND THE NFT</p>
+              <p> Your NFT has already been minted!</p>
             </div>
+            <div v-if="!isWalletConnected">
+              <h2>Please connect your wallet to proceed</h2>
+              <button @click="connect">Connect Wallet</button>
+            </div>
+          </div>
+
+          <div v-if="isWalletConnected">
+            <h2>NFT Viewer</h2>
+            <p>You have the following NFTs</p>
+            <ul>
+              <li v-for="nft in usersNfts" :key="nft.nftId">
+                {{ nft.nftId }}: <a v-if="nft.hrl" @click="viewNft(nft.hrl, $event)">{{ nft.hrl }}</a><span v-else>No HRL</span>
+              </li>
+            </ul>
+            <img v-if="nftImage" :src="nftImage" />
           </div>
         </div>
       </div>
@@ -38,19 +52,20 @@
   <script lang="ts">
   import { defineComponent, inject, ComputedRef } from 'vue';
   import { Interface } from './place_nft/interface';
+  import { Nft, NftData } from './ethereum/types';
   import '@material/mwc-circular-progress';
   import { CONTRACT_ADDRESS } from './ethereum/consts'
   import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action, encodeHashToBase64 } from '@holochain/client';
-  import { NftRecord } from './place_nft/types';
+  import { NftRecord, NftTokenUri } from './place_nft/types';
   import { ethers } from "ethers";
   import contractArtifact from '../../contract/artifacts/contracts/place_nft.sol/placeNFT.json';
   import WalletConnectProvider from "@walletconnect/web3-provider";
   import { markRaw } from 'vue';
+  import { Alchemy, Network } from "alchemy-sdk";
   
-
   // Main page logic
   export default defineComponent({
-    data(): { loading: boolean; error: any, badgeAction: ActionHash | null, badgeImageRaw: any, badgeImage: any, walletProvider: any, signer: any, hrl: string, nftRecord: NftRecord | null, isWalletConnected: Boolean, walletAddress: any } {
+    data(): { loading: boolean; error: any, badgeAction: ActionHash | null, badgeImageRaw: any, badgeImage: any, walletProvider: any, signer: any, hrl: string, nftRecord: NftRecord | null, isWalletConnected: Boolean, walletAddress: any, usersNfts: NftTokenUri[] | null, nftImage: any } {
       return {
         loading: true,
         error: undefined,
@@ -63,6 +78,8 @@
         nftRecord: null,
         isWalletConnected: false,
         walletAddress: null,
+        usersNfts: null,
+        nftImage: null,
       }
     },
     async mounted() {
@@ -133,12 +150,17 @@
             }
             console.log("saving nft")
             console.log(this.hrl)
-            await this.happ.saveNft(nftId, CONTRACT_ADDRESS, this.hrl)
+            await this.happ.saveNft(nftId, CONTRACT_ADDRESS, this.hrl, this.badgeAction)
           }
              
         } catch (e){
           console.log(e)
         }
+      },
+
+      async checkForNfts() {
+        console.log("checking for nfts")
+        const nftContractInstance = new ethers.Contract(CONTRACT_ADDRESS, contractArtifact.abi, this.signer);
       },
 
       async connect() {
@@ -170,6 +192,36 @@
         }
       },
 
+      async fetchUserNfts() {
+        try {
+          // Super hacky to put this stuff here, BUT it's because this code shouldn't 
+          // really be necessary if there was a proper gateway to retrieve NFTs
+          const config = {
+            apiKey: "aFQ94Sn1r_OOp0K6Bmge-3hfVsRB0-yD",
+            network: Network.ETH_GOERLI,
+          };
+          const alchemy = new Alchemy(config);
+          const rawData = await alchemy.nft.getNftsForOwner(this.walletAddress);
+          this.usersNfts = rawData.ownedNfts
+          .filter(nft => nft.contract.address.toLowerCase() === "0xCa70AE825357b2f062B51b324a8be238132Cb314".toLowerCase())
+          .map(nft => ({
+            nftId: nft.tokenId,
+            hrl: nft.tokenUri ? nft.tokenUri.raw : undefined
+          }));
+        } catch (e) {
+          console.log(e)
+        }
+      },
+
+      async viewNft(hrl: string, event: Event) {
+        console.log('viewNft called with', hrl, event);
+        event.preventDefault();
+        try {
+          this.nftImage = await this.happ.viewNftImage(hrl)
+        } catch (e) {
+          console.log(e)
+        }
+      },
     },
     watch: {
       badgeImageRaw(newBadgeImageRaw) {
@@ -203,6 +255,7 @@
           } catch (e) {
             console.log(e)
           }
+          this.fetchUserNfts()
           console.log("test logging with2 ", this.walletProvider.accounts[0])
           console.log("Got wallet address: " + this.walletAddress)
           if (!!this.badgeAction) {

@@ -73,15 +73,17 @@ pub fn validate_create_link(
     debug!("Validating HRL link");
     let link_author = create_link.hashed.content.author;
     let target_action_hash = create_link.hashed.content.target_address.into_action_hash().unwrap();
-    
+    debug!("Still validating");
     let target_action = must_get_action(target_action_hash)?;
     let target_author = target_action.hashed.content.author();
     if target_author == &link_author {
+      debug!("Validated HRL link");
       Ok(ValidateCallbackResult::Valid)
     } else {
       Ok(ValidateCallbackResult::Invalid("Only badge author can generate HRL link".to_string()))
     }
   } else {
+    debug!("Not an HRL link");
     Ok(ValidateCallbackResult::Valid)
   }
   
