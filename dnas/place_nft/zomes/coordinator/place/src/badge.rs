@@ -27,7 +27,7 @@ fn get_badge_action(_: ()) -> ExternResult<Option<ActionHash>> {
 }
 
 #[hdk_extern]
-fn get_badge(action_hash: ActionHash) -> ExternResult<Vec<u8>> {
+fn get_badge(action_hash: ActionHash) -> ExternResult<String> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     debug!("Getting badge at {:?}", action_hash);
     let maybe_record = get(action_hash, GetOptions::default())?;
@@ -220,7 +220,7 @@ fn get_nft(hrl: String) -> ExternResult<Option<NftRecord>> { // retrieve the reg
 }
 
 #[hdk_extern]
-fn view_nft_image(hrl: String) -> ExternResult<Option<Vec<u8>>> { // retrieve the badge image for a given HRL
+fn view_nft_image(hrl: String) -> ExternResult<Option<String>> { // retrieve the badge image for a given HRL
     std::panic::set_hook(Box::new(zome_panic_hook));
     let hrl_anchor = get_anchor_typed_path(&hrl)?;
     let links_result = get_links(

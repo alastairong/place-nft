@@ -1,7 +1,9 @@
 use hdi::prelude::*;
-use image::{ImageBuffer, Rgba};
+use image::{ImageBuffer, Rgba, ImageOutputFormat};
 use imageproc::{drawing::draw_text_mut};
 use rusttype::{Font, Scale};
+use base64;
+use std::io::Cursor;
 use crate::snapshot::Snapshot;
 use crate::double_pixel::DoublePixel;
 
@@ -25,9 +27,9 @@ const TEMPLATE_DATA: &[u8] = include_bytes!("../template.png");
 #[derive(Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Badge {
-   pub image_data: Vec<u8>,
+   pub image_data: String, // base64 encoded string of png image
    pub eth_address: String,
-   pub eth_signed_contents: String,
+   pub eth_signed_contents: String, 
 }
 
 impl Badge {
@@ -44,8 +46,15 @@ impl Badge {
       img = write_placement_count(placement_count, &font, img);
       img = write_author_name(author, &font, img);
 
+      // convert to a base64 encoded string
+      let mut buf = Vec::new();
+      img.write_to(&mut Cursor::new(&mut buf), ImageOutputFormat::Png).unwrap();
+      let mut img_base64 = base64::encode(&buf);
+      
+      // add the data:image/png;base64, prefix for browser rendering
+      img_base64 = format!("data:image/png;base64,{}", img_base64);
       Self {
-         image_data: img.into_raw(),
+         image_data: img_base64,
          eth_address,
          eth_signed_contents, // we will check this in the validation
       }
