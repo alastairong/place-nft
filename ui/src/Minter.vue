@@ -225,8 +225,15 @@
     },
     watch: {
       badgeImageRaw(newBadgeImageRaw) {
+        console.log("badgeImageRaw changed")
+        console.log(newBadgeImageRaw)
         let imageblob = new Blob([new Uint8Array(newBadgeImageRaw)], { type: 'image/png' });
-        this.badgeImage = URL.createObjectURL(imageblob);
+        
+        let reader = new FileReader();
+        reader.onload = () => {
+          this.badgeImage = reader.result
+        };
+        reader.readAsDataURL(imageblob);
       },
 
       badgeAction(newBadgeAction) {

@@ -1,6 +1,6 @@
 use hdk::prelude::*;
 use place_integrity::*;
-use zome_utils::{zome_panic_hook, error, get_typed_from_links};
+use zome_utils::{zome_panic_hook};
 
 #[hdk_extern]
 fn get_badge_action(_: ()) -> ExternResult<Option<ActionHash>> {
