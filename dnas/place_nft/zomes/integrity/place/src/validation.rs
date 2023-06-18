@@ -4,9 +4,8 @@ use crate::Badge;
 
 /* Validation Rules
 1. Only 1 badge per agent
-2. Only 1 HRL per badge
-3. Only 1 badge per HRL
-4. Badge must be created by the same agent as the HRL
+2. Only 1 HRL per badge (across all users)
+4. HRL must be created by same agent as linked badge
 5. HRL must be based on the same ETH address as the badge
 6. Badge creator must have placed a placement
  */
@@ -43,7 +42,7 @@ fn validate_create_entry(
       // search history for past entry creations
       for registered_action in author_actions.into_iter() {
         match registered_action.action.hashed.action_type() {
-          // If the action creates an entry, check if the entry is a placement
+          // If the action creates an entry, check if the entry is a placement (Validation rule 6)
           ActionType::Create => {
             let placement_app_entry_type = AppEntryDef::new(0.into(), 0.into(), EntryVisibility::Public);
             let entry_type = registered_action.action.hashed.content.entry_type().unwrap().clone();

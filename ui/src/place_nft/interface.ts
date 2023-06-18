@@ -8,6 +8,11 @@ export class Interface {
         this.client = client;
     }
 
+    async myPubKey(): Promise<AgentPubKeyB64> {
+        const pubKeyBytes = this.client.myPubKey;
+        return encodeHashToBase64(pubKeyBytes);
+    }
+
     async getSnapshotAt(bucketIndex: number): Promise<Snapshot | undefined> {
         console.log("getSnapshotAt called at bucketIndex: " + bucketIndex);
         return this.client.callZome({

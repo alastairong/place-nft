@@ -56,6 +56,7 @@
   import { CONTRACT_ADDRESS } from './ethereum/consts'
   import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action, encodeHashToBase64 } from '@holochain/client';
   import { NftRecord, NftTokenUri } from './place_nft/types';
+  import { Message } from './ethereum/types';
   import { ethers } from "ethers";
   import contractArtifact from '../../contract/artifacts/contracts/place_nft.sol/placeNFT.json';
   import WalletConnectProvider from "@walletconnect/web3-provider";
@@ -158,7 +159,15 @@
       async createBadge() {
         try { 
           console.log("creating badge")
-          this.badgeAction = await this.happ.generateBadgeImage(this.walletAddress, "Signed Placeholder")
+
+          const signPayload: Message = {
+            NFTAuthor: await this.happ.myPubKey(),
+            ethereumAddress: this.walletAddress, // remember that this is lower_cased
+          }
+
+          const signature = await this.signer.signMessage(signPayload) // sign the payload
+
+          this.badgeAction = await this.happ.generateBadgeImage(this.walletAddress, signature) // we don't send the rest of the info as validation logic should be able to calculate it from the badge entry
         } catch (e) {
           console.log(e)
         }
