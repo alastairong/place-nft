@@ -7,7 +7,7 @@ use crate::utils::*;
 /// Add placement to current bucket
 #[hdk_extern]
 pub fn place_pixel(input: DestructuredPlacement) -> ExternResult<ActionHash> {
-   debug!("*** place_pixel() CALLED: {:?}", input);
+//    debug!("*** place_pixel() CALLED: {:?}", input);
    std::panic::set_hook(Box::new(zome_panic_hook));
    // Make sure not already placed
    let now = now();
@@ -22,7 +22,7 @@ pub fn place_pixel(input: DestructuredPlacement) -> ExternResult<ActionHash> {
    let action_hash = create_entry(EntryTypes::Placement(placement.clone()))?;
    // Link to current bucket path
    let entry_hash = hash_entry(placement)?;
-   debug!("*** place_pixel() path: {}", path_to_str(&path.clone().typed(LinkTypes::PlacementLink)?));
+//    debug!("*** place_pixel() path: {}", path_to_str(&path.clone().typed(LinkTypes::PlacementLink)?));
    let _ = create_link(
       path.path_entry_hash()?,
       entry_hash,
@@ -37,10 +37,10 @@ pub fn place_pixel(input: DestructuredPlacement) -> ExternResult<ActionHash> {
 #[hdk_extern]
 pub fn get_placements_at(bucket_index: u32) -> ExternResult<Vec<Placement>> {
    std::panic::set_hook(Box::new(zome_panic_hook));
-   debug!("*** get_placements_at() CALLED - {}", bucket_index);
+//    debug!("*** get_placements_at() CALLED - {}", bucket_index);
    let time = bucket_index * BUCKET_SIZE_SEC + START_TIME;
    let bucket_path = get_path(time);
-   debug!("*** get_placements_at() bucket_path: {}", path_to_str(&bucket_path.clone().typed(LinkTypes::PlacementLink)?));
+//    debug!("*** get_placements_at() bucket_path: {}", path_to_str(&bucket_path.clone().typed(LinkTypes::PlacementLink)?));
    // Get placements at given bucket path
    let mut pairs: Vec<(Placement, Link)> = get_typed_from_links(
       bucket_path.path_entry_hash()?,
@@ -49,16 +49,16 @@ pub fn get_placements_at(bucket_index: u32) -> ExternResult<Vec<Placement>> {
    )?;
    // Sort by Link timestamp
    pairs.sort_by(|a, b| b.1.timestamp.cmp(&a.1.timestamp));
-   debug!("****** sorted pairs:");
-   for pair in pairs.iter() {
-      debug!(" - {:?}", pair.1.timestamp)
-   }
+//    debug!("****** sorted pairs:");
+//    for pair in pairs.iter() {
+//       debug!(" - {:?}", pair.1.timestamp)
+//    }
    // Return only Placement
    let placements: Vec<Placement> = pairs.iter()
       .map(|pair| pair.0.clone())
       .collect();
    // Done
-   debug!("*** get_placements_at() END - {}", placements.len());
+//    debug!("*** get_placements_at() END - {}", placements.len());
    Ok(placements)
 }
 
@@ -142,6 +142,7 @@ pub fn get_my_placements_count(_: ()) -> ExternResult<u16> {
 /** DEBUGGING API */
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PlaceAtInput {
    placement: DestructuredPlacement,
    bucket_index: u32,

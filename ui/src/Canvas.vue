@@ -21,33 +21,47 @@
             :class="{ active: color === selectedColor }">
         </div>
       </div>
+      <div v-if="finished">
+        <div class="overlay"></div> <!--if this doesn't cover enough, move this to top level and add v-if condition -->
+          <Minter></Minter>
+      </div>
     </div>
   
   </template>
   
   <script lang="ts">
+  import Minter from './Minter.vue';
   import { defineComponent, inject, toRaw, ComputedRef } from 'vue';
-  import { Interface } from './place_nft/place/interface';
+  import { Interface } from './place_nft/interface';
   import { AppAgentClient } from '@holochain/client';
-  import { Snapshot, Placement, DestructuredPlacement, PlaceSignal } from './place_nft/place/types';
-  import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/place/utils';
+  import { Snapshot, Placement, DestructuredPlacement, PlaceSignal } from './place_nft/types';
+  import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/utils';
   import '@material/mwc-circular-progress';
   // TODO: Placements outside of a snapshot are not currently rendered
-  const GAME_START_TIME = 1679090595; // Must be updated to match DNA timestamp
+  const GAME_START_TIME = 1687075008; // Must be updated to match DNA timestamp
+  const BUCKET_DURATION = 60 * 1; // 1 minutes
+  const BUCKETS_PER_HOUR = 60 * 60 / BUCKET_DURATION;
+  const HOURS_OF_GAMEPLAY = 1;
+  const GAME_END_TIME = GAME_START_TIME + HOURS_OF_GAMEPLAY * BUCKET_DURATION * BUCKETS_PER_HOUR;
   
   export default defineComponent({
-    data(): { grid: String[]; selectedColor: String; clock: number; currentBucket: number; latestSnapshot: Snapshot | undefined; placementsSinceLatestSnapshot: Array<Placement>; loading: boolean; error: any; timer: any; colors: String[];} {
+    components: {
+      Minter
+    },
+    data(): { grid: String[]; selectedColor: String; clock: number; currentBucket: number; latestSnapshot: Snapshot | undefined; latestSnapshotBucket: number; placementsSinceLatestSnapshot: Array<Placement>; loading: boolean; error: any; timer: any; colors: String[]; finished: boolean} {
       return {
         grid: Array(16384).fill("#ffffff"), // Create a grid of 100x100 cells and set their background color to white
         selectedColor: "#ffffff", // Initialize the selected color to white
         clock: 0,
         currentBucket: 0,
         latestSnapshot: undefined,
+        latestSnapshotBucket: -1,
         placementsSinceLatestSnapshot: [],
         loading: true,
         error: undefined,
         timer: undefined,
-        colors: COLOR_PALETTE
+        colors: COLOR_PALETTE,
+        finished: false
       }
     },
     created() {
@@ -72,8 +86,8 @@
       calculateCurrentBucket() {
           const now = new Date();
           const timeInSeconds = Math.round(now.getTime() / 1000); 
-          this.clock = timeInSeconds;
-          this.currentBucket = Math.floor((timeInSeconds - GAME_START_TIME) / (60 * 5));
+          this.clock = Math.min(timeInSeconds, GAME_END_TIME);
+          this.currentBucket = Math.floor((this.clock - GAME_START_TIME) / BUCKET_DURATION);
           console.log("Current bucket: " + this.currentBucket);
       },
 
@@ -87,9 +101,11 @@
               await this.catchUpToCurrentSnapshot();  // if there's no snapshot, find the most recent one and publish old snapshots until now
             } else {
               this.latestSnapshot = maybeSnapshot;
+              this.latestSnapshotBucket = this.currentBucket;
             }
             this.placementsSinceLatestSnapshot = await this.happ.getPlacementsAt(this.currentBucket); // get placements at the current bucket
             this.loading = false;
+            this.finished = Date.now() > GAME_END_TIME * 1000;
           } catch (e) {
               console.log(e);
           }
@@ -106,6 +122,7 @@
           let snapshot = await this.happ.getSnapshotAt(bucket);
           if (snapshot) {
             this.latestSnapshot = snapshot;
+            this.latestSnapshotBucket = this.currentBucket;
             break;
           }
         };
@@ -116,6 +133,7 @@
 
           if (maybeSnapshot !== null) {
             this.latestSnapshot = maybeSnapshot;
+            this.latestSnapshotBucket = 0;
             console.log("Published starting snapshot: " + this.latestSnapshot);
           } else {
             console.log("Error publishing starting snapshot");
@@ -129,6 +147,7 @@
           const maybeSnapshot = await this.happ.publishSnapshotAt(bucket);
           if (maybeSnapshot !== null) {
             this.latestSnapshot = maybeSnapshot;
+            this.latestSnapshotBucket = bucket;
             console.log("Published snapshot: " + this.latestSnapshot);
           } else {
             console.log("Error publishing snapshot");
@@ -141,30 +160,39 @@
         }
       },
 
-      // In this function, we only update the bucket once we have a new snapshot. This keeps the bucket
-      // in sync with the snapshot, and acts as a flag for having a latest snapshot.
       async updateData() {
         console.log("Updating data at bucket " + this.currentBucket + " at " + Date.now());
           // update clock and check if we've moved to a new bucket
           const now = new Date();
           const timeInSeconds = Math.round(now.getTime() / 1000); 
-          this.clock = timeInSeconds;
-          const bucket = Math.floor((timeInSeconds - GAME_START_TIME) / (60 * 5));
-          // TODO: Make this call conditional so it doesn't always re-pull the latest snapshot
-          this.currentBucket = bucket;
-          try {
-            // See if there's a new snapshot
-            let newSnapshot = await this.happ.getSnapshotAt(bucket);
-            if (newSnapshot) {
-              this.latestSnapshot = newSnapshot;
-              this.placementsSinceLatestSnapshot = await this.happ.getPlacementsAt(bucket);
-              // console.log("Placements since latest snapshot: " + JSON.stringify(this.placementsSinceLatestSnapshot));
-            } else {
-              await this.tryPublish();
-            }
-          } catch (e) {
-            console.log(e);
+          this.finished = timeInSeconds > GAME_END_TIME;
+
+          this.clock = Math.min(timeInSeconds, GAME_END_TIME);
+          const bucket = Math.floor((this.clock - GAME_START_TIME) / BUCKET_DURATION);
+          
+          // move to new bucket if changed
+          if (bucket != this.currentBucket) {
+            console.log("Moving to new bucket " + bucket);
+            this.currentBucket = bucket;
+          } else {
+            console.log("Still at bucket " + bucket);
           }
+          
+          if (this.latestSnapshotBucket < this.currentBucket) {
+            try {    
+              let newSnapshot = await this.happ.getSnapshotAt(bucket);
+              if (newSnapshot) {
+                this.latestSnapshot = newSnapshot;
+                this.placementsSinceLatestSnapshot = await this.happ.getPlacementsAt(bucket);
+                // console.log("Placements since latest snapshot: " + JSON.stringify(this.placementsSinceLatestSnapshot));
+              } else {
+                await this.tryPublish();
+              }
+            } catch (e) {
+              console.log(e);
+            }
+          }
+          
       },
 
       async placePixel(index: number) { 
@@ -195,9 +223,9 @@
         }
         console.log("CurrentBucket is " + this.currentBucket)
         console.log("Rank is " + rank)
-        let secondsInBucket = (this.clock - GAME_START_TIME) - (this.currentBucket * (5 * 60)); 
+        let secondsInBucket = (this.clock - GAME_START_TIME) - (this.currentBucket * BUCKET_DURATION); 
         console.log("Seconds in bucket is " + secondsInBucket)
-        if (rank <= Math.floor(secondsInBucket/10) || secondsInBucket > 150) {
+        if ((rank - 1) <= Math.floor(secondsInBucket/2) || secondsInBucket > 20 || this.currentBucket * BUCKET_DURATION + GAME_START_TIME >= GAME_END_TIME) {
           console.log("Publishing snapshot at bucket " + this.currentBucket + "...")
           const snapshot = await this.happ.publishSnapshotAt(this.currentBucket);
           if (snapshot) {
@@ -205,6 +233,7 @@
             this.placementsSinceLatestSnapshot = [];
           }
         } else {
+          console.log("Rank too low / not enough time elapsed to publish")
           return
         }
       },
@@ -228,14 +257,20 @@
           this.grid = updateGrid(baseImageData, newPlacements); // unpack grid data
         }
       },
+
+      finished(newValue) { 
+        if (newValue) {
+          clearInterval(this.timer); // cancel the timer when game is finished
+        }
+      }
     },
 
     setup() {
       const client = (inject('client') as ComputedRef<AppAgentClient>).value;
-      const placeInterface = new Interface(client);
+      const happ = (inject('placeInterface') as ComputedRef<Interface>).value;
       return {
         client,
-        happ: placeInterface,
+        happ,
       };
     },
   })
@@ -283,6 +318,33 @@
       padding: 0; /* remove any padding */
       border: none; /* remove any border */
       box-shadow: 0 0 0 1px #000; /* add a black border effect */
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+
+    .modal {
+      /* your modal styles */
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1002; /* higher than .overlay */
+      background-color: white;
+      padding: 20px;
+      border: 1px solid #ccc;
+      width: 80%;
+    }
+
+    w3m-modal {
+      z-index: 1003; /* higher than .modal */
     }
   </style>
   

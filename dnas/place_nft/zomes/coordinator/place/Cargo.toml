@@ -9,9 +9,6 @@ name = "place"
 
 [dependencies]
 hdk = { workspace = true }
-
 serde = { workspace = true }
-
 place_integrity = { workspace = true } 
-
- zome_utils = { workspace = true }
+zome_utils = { workspace = true }

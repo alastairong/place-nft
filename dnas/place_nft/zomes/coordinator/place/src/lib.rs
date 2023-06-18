@@ -8,7 +8,10 @@ mod snapshots;
 pub use snapshots::*;
 mod ranking;
 pub use ranking::*;
+mod badge;
+pub use badge::*;
 pub use place_integrity::*;
+
 
 /// Called the first time a zome call is made to the cell containing this zome
 #[hdk_extern]
@@ -39,6 +42,7 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
     match action.hashed.content.clone() {
         Action::Create(_create) => {
             if let Ok(Some(app_entry)) = get_entry_for_action(&action.hashed.hash) {
+                debug!("Emitting signal");
                 emit_signal(Signal::EntryCreated {
                     action,
                     app_entry,

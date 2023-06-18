@@ -2,7 +2,7 @@ use hdi::prelude::*;
 use crate::double_pixel::DoublePixel;
 use crate::Placement;
 use crate::globals::*;
-use crate::LinkTypes;
+use crate::links::LinkTypes;
 
 /// For typescript bindings compatability
 type Uint8Array = Vec<DoublePixel>;
@@ -13,7 +13,7 @@ type Uint8Array = Vec<DoublePixel>;
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
    pub image_data: Uint8Array, // 2 x 4-bit pixels per u8
-   pub placement_count: u32, // Number of placements in this bucket
+   pub placement_count: u32, // Cumulative number of placements in this snapshot
    pub bucket_index: u32, // Number of 'bucket_size_sec' since START.
 }
 
@@ -46,7 +46,7 @@ impl Snapshot {
  
  /// Apply placements to 'image_data'
  pub fn apply_pixels_to_canvas(image_data: &mut Vec<DoublePixel>, placements: Vec<Placement>) {
-    debug!("apply_pixels_to_canvas(): {} placements", placements.len());
+   //  debug!("apply_pixels_to_canvas(): {} placements", placements.len());
     for placement in placements {
        //debug!("placing: {:?} | {}", placement, placement.index());
        let index: usize = (placement.index(CANVAS_SIZE) / 2) as usize;

@@ -12,7 +12,7 @@ pub fn publish_starting_snapshot(_: ()) -> ExternResult<Option<Snapshot>> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     let first = Snapshot::create_first();
     publish_snapshot(&first)?;
-    debug!("*** publish_starting_snapshot() first snapshot created: {}", first.bucket_index);
+    // debug!("*** publish_starting_snapshot() first snapshot created: {}", first.bucket_index);
     Ok(Some(first))
 }
 
@@ -56,16 +56,16 @@ pub fn publish_snapshot_at(bucket: u32) -> ExternResult<Option<Snapshot>> {
 #[hdk_extern]
 pub fn get_snapshot_at(bucket_index: u32) -> ExternResult<Option<Snapshot>> {
     std::panic::set_hook(Box::new(zome_panic_hook));
-    debug!("*** get_snapshot_at() CALLED - bucket: {}", bucket_index);
+    // debug!("*** get_snapshot_at() CALLED - bucket: {}", bucket_index);
     let bucket_path = bucket_index_to_path(bucket_index);
-    debug!("get_snapshot_at() at path: {}", path_to_str(&bucket_path.clone().typed(LinkTypes::SnapshotLink)?));
+    // debug!("get_snapshot_at() at path: {}", path_to_str(&bucket_path.clone().typed(LinkTypes::SnapshotLink)?));
     let pairs: Vec<(Snapshot, Link)> = get_typed_from_links(
         bucket_path.path_entry_hash()?,
         LinkTypes::SnapshotLink,
         None,
    )?;
    if pairs.is_empty() {
-        warn!("Snapshot not found for bucket: {}", bucket_index);
+        // warn!("Snapshot not found for bucket: {}", bucket_index);
         return Ok(None);
         //return error(&format!("Snapshot not found for bucket: {}", time_bucket_index));
    }
