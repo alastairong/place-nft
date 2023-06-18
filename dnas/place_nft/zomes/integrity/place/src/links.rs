@@ -8,9 +8,8 @@ pub enum LinkTypes {
     OldToNewSnapshotLink,
     NewToOldSnapshotLink,
     HRLtoBadgeLink,
-    BadgetoHRLLink,
+    // BadgetoHRLLink // Unnecessary since we can validate that the badge only has 1 HRL by checking the source chain, since we already validate that the link and badge author are the same
     HRLtoNftIdLink
-    // BadgeToMinterAddressLink, // Do we need reverse to be able to look up all badges minted by a given address?
 }
 
 pub struct HRLtoBadgeLink;
@@ -26,17 +25,17 @@ impl HRLtoBadgeLink {
 }
 
 
-pub struct BadgetoHRLLink;
-impl BadgetoHRLLink {
-    const TAG: &'static [u8; 3] = b"hrl";
-    /// Create the tag
-    pub fn link_tag() -> LinkTag {
-        LinkTag::new(*Self::TAG)
-    }
-    pub fn link_type() -> LinkTypes {
-        LinkTypes::BadgetoHRLLink
-    }
-}
+// pub struct BadgetoHRLLink;
+// impl BadgetoHRLLink {
+//     const TAG: &'static [u8; 3] = b"hrl";
+//     /// Create the tag
+//     pub fn link_tag() -> LinkTag {
+//         LinkTag::new(*Self::TAG)
+//     }
+//     pub fn link_type() -> LinkTypes {
+//         LinkTypes::BadgetoHRLLink
+//     }
+// }
 
 pub struct HRLtoNftIdLink;
 impl HRLtoNftIdLink {
@@ -51,14 +50,3 @@ impl HRLtoNftIdLink {
 }
 
 
-// pub struct BadgeToMinterAddressLink;
-// impl BadgeToMinterAddressLink {
-//     const TAG: &'static [u8; 14] = b"allowed_minter";
-//     /// Create the tag
-//     pub fn link_tag() -> LinkTag {
-//         LinkTag::new(*Self::TAG)
-//     }
-//     pub fn link_type() -> LinkTypes {
-//         LinkTypes::BadgeToMinterAddressLink
-//     }
-// }

@@ -42,6 +42,7 @@ fn signal_action(action: SignedActionHashed) -> ExternResult<()> {
     match action.hashed.content.clone() {
         Action::Create(_create) => {
             if let Ok(Some(app_entry)) = get_entry_for_action(&action.hashed.hash) {
+                debug!("Emitting signal");
                 emit_signal(Signal::EntryCreated {
                     action,
                     app_entry,

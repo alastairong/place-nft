@@ -12,7 +12,6 @@ pub struct NftRecord {
 impl NftRecord {
 
     pub fn new(nft_id: u32, contract_address: String) -> Self {
-        debug!("Creating first snapshot");
         Self {
             nft_id,
             contract_address

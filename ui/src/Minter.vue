@@ -52,7 +52,6 @@
   <script lang="ts">
   import { defineComponent, inject, ComputedRef } from 'vue';
   import { Interface } from './place_nft/interface';
-  import { Nft, NftData } from './ethereum/types';
   import '@material/mwc-circular-progress';
   import { CONTRACT_ADDRESS } from './ethereum/consts'
   import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action, encodeHashToBase64 } from '@holochain/client';
@@ -62,43 +61,34 @@
   import WalletConnectProvider from "@walletconnect/web3-provider";
   import { markRaw } from 'vue';
   import { Alchemy, Network } from "alchemy-sdk";
+  import util from 'util';
   
   // Main page logic
   export default defineComponent({
-    data(): { loading: boolean; error: any, badgeAction: ActionHash | null, badgeImageRaw: any, badgeImage: any, walletProvider: any, signer: any, hrl: string, nftRecord: NftRecord | null, isWalletConnected: Boolean, walletAddress: any, usersNfts: NftTokenUri[] | null, nftImage: any } {
+    data(): { loading: boolean; error: any, badgeAction: ActionHash | undefined, badgeImage: string | undefined, walletProvider: any, signer: any, hrl: string, nftRecord: NftRecord | undefined, isWalletConnected: Boolean, walletAddress: any, usersNfts: NftTokenUri[] | undefined, nftImage: any } {
       return {
         loading: true,
         error: undefined,
-        badgeAction: null,
-        badgeImageRaw: null,
-        badgeImage: null,
-        walletProvider: null,
-        signer: null,
+        badgeAction: undefined,
+        badgeImage: undefined,
+        walletProvider: undefined,
+        signer: undefined,
         hrl: "",
-        nftRecord: null,
+        nftRecord: undefined,
         isWalletConnected: false,
-        walletAddress: null,
-        usersNfts: null,
-        nftImage: null,
+        walletAddress: undefined,
+        usersNfts: undefined,
+        nftImage: undefined,
       }
     },
     async mounted() {
-      console.log("getting badge Image")
       this.getBadgeImage()
-      console.log("got badge Image: " + this.badgeImageRaw)
+      if (!!this.badgeImage) console.log("got badge Image: " + this.badgeImage.substring(0, 30))
       this.loading = false
-      console.log("Initializing wallet provider")
-
       const provider = new WalletConnectProvider({
         infuraId: "a5238372835346588d9c347de0a2226e",
       });
       this.walletProvider = markRaw(provider);
-      // console.log("Close any existing connection")
-      // this.walletProvider.disconnect();
-      // console.log("test logging?")
-      // console.log(this.walletProvider)
-      // console.log("test logging with ", this.walletProvider.connected)
-      // console.log("test logging with2 ", this.walletProvider.accounts[0])
       this.isWalletConnected = this.walletProvider.connected;
       console.log("Initialized wallet provider, listening for connection")
       this.walletProvider.on('connect', async () => {
@@ -110,51 +100,46 @@
       async getBadgeImage() {
         console.log("getting badge image")
         try {
-          this.badgeAction = await this.happ.getBadgeAction()
+          this.badgeAction = await this.happ.getBadgeAction() 
         } catch (e) {
           console.log(e)
         }
         
         if (!!this.badgeAction) {
-          this.badgeImageRaw = await this.happ.getBadge(this.badgeAction)
+          this.badgeImage = await this.happ.getBadge(this.badgeAction) 
         }
       },
 
       async getNftRecord(hrl: String) {
-        this.nftRecord = await this.happ.getNft(hrl)
+        this.nftRecord = await this.happ.getNft(hrl) 
       },
 
       async mintNft() {
         
         // instantiate smart contract
         const nftContractInstance = new ethers.Contract(CONTRACT_ADDRESS, contractArtifact.abi, this.signer);
-        console.log("nftContractInstance")
-        console.log(nftContractInstance)
         // make call to smart contract method
         try {
           if (!!this.badgeAction) {
             const tx = await nftContractInstance.mintNFT(encodeHashToBase64(this.badgeAction)); // make contract call
-            console.log("tx")
-            console.log(tx)
             const receipt = await tx.wait(); // wait for tx to be mined
-            console.log("receipt")
-            console.log(receipt)
+
             // look for broadcasted event with nftId
             const event = receipt.events.find((event: any) => event.event === 'Minted');
             const newItemId = event.args.newItemId;
             const nftId = newItemId.toNumber();
-            console.log("nftId: ", nftId)
             this.nftRecord = {
               nftId,
               contractAddress: CONTRACT_ADDRESS
             }
-            console.log("saving nft")
-            console.log(this.hrl)
-            await this.happ.saveNft(nftId, CONTRACT_ADDRESS, this.hrl, this.badgeAction)
+            const hrl = await this.happ.generateHrl(this.badgeAction) // set up the actual HRLs and return the real one
+            await this.happ.saveNft(nftId, CONTRACT_ADDRESS, hrl, this.badgeAction)
+            this.fetchUserNfts()
           }
              
         } catch (e){
-          console.log(e)
+          console.log("Error with minting NFT")
+          console.log(util.inspect(e, { depth: null }));
         }
       },
 
@@ -165,11 +150,8 @@
 
       async connect() {
         // your connect logic here
-        console.log("connecting");
         await this.walletProvider.enable();
         console.log(this.walletProvider)
-        console.log("test logging with ", this.walletProvider.connected)
-        console.log("test logging with2 ", this.walletProvider.accounts[0])
         this.isWalletConnected = this.walletProvider.connected;
       },
 
@@ -182,9 +164,8 @@
         }
         
         try {
-          console.log("fetching and storing badge")
           if(!!this.badgeAction) {
-            this.badgeImageRaw = await this.happ.getBadge(this.badgeAction)
+            this.badgeImage = await this.happ.getBadge(this.badgeAction)
           }
           
         } catch (e) {
@@ -209,33 +190,21 @@
             hrl: nft.tokenUri ? nft.tokenUri.raw : undefined
           }));
         } catch (e) {
-          console.log(e)
+          console.log(util.inspect(e, { depth: null }));
         }
       },
 
       async viewNft(hrl: string, event: Event) {
-        console.log('viewNft called with', hrl, event);
+        
         event.preventDefault();
         try {
           this.nftImage = await this.happ.viewNftImage(hrl)
         } catch (e) {
-          console.log(e)
+          console.log(util.inspect(e, { depth: null }));
         }
       },
     },
     watch: {
-      badgeImageRaw(newBadgeImageRaw) {
-        console.log("badgeImageRaw changed")
-        console.log(newBadgeImageRaw)
-        let imageblob = new Blob([new Uint8Array(newBadgeImageRaw)], { type: 'image/png' });
-        
-        let reader = new FileReader();
-        reader.onload = () => {
-          this.badgeImage = reader.result
-        };
-        reader.readAsDataURL(imageblob);
-      },
-
       badgeAction(newBadgeAction) {
         if (!!this.walletAddress && newBadgeAction) {
           this.hrl = encodeHashToBase64(newBadgeAction) + this.walletAddress;
@@ -252,21 +221,18 @@
         if (newValue) {
           console.log("Wallet connected, creating ethers provider")
           const provider = new ethers.providers.Web3Provider(this.walletProvider);
-          console.log("Getting ethers signer object")
           const signer = provider.getSigner();
           this.signer = markRaw(signer);
-          console.log("Got ethers signer object: " + this.signer)
+
           try {
-            console.log("Getting wallet address")
-            this.walletAddress = await this.signer.getAddress()
+            const rawWalletAddress: string = await this.signer.getAddress();
+            this.walletAddress = rawWalletAddress.toLowerCase();
           } catch (e) {
             console.log(e)
           }
           this.fetchUserNfts()
-          console.log("test logging with2 ", this.walletProvider.accounts[0])
           console.log("Got wallet address: " + this.walletAddress)
           if (!!this.badgeAction) {
-            console.log("Blah")
             this.hrl = encodeHashToBase64(this.badgeAction) + this.walletAddress
             try {
               this.nftRecord = await this.happ.getNft(this.hrl)
@@ -289,6 +255,10 @@
 </script>
 
 
- 
-
-
+<style>
+  img {
+    border: 3px solid #333;
+    padding: 10px;
+    background-color: #eee;
+  }
+</style>

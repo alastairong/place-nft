@@ -1,4 +1,4 @@
-import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action } from '@holochain/client';
+import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action, encodeHashToBase64 } from '@holochain/client';
 import { Snapshot, Placement, NftRecord, GetAuthorRankInput, DestructuredPlacement, GenerateBadgeInput, GenerateHrlInput, SaveNftInput } from './types';
 
 export class Interface {
@@ -8,7 +8,7 @@ export class Interface {
         this.client = client;
     }
 
-    async getSnapshotAt(bucketIndex: number): Promise<Snapshot | null> {
+    async getSnapshotAt(bucketIndex: number): Promise<Snapshot | undefined> {
         console.log("getSnapshotAt called at bucketIndex: " + bucketIndex);
         return this.client.callZome({
             cap_secret: null,
@@ -29,7 +29,7 @@ export class Interface {
         });
     }
 
-    async publishStartingSnapshot(): Promise<Snapshot | null> {
+    async publishStartingSnapshot(): Promise<Snapshot | undefined> {
         console.log("Calling publishStartingSnapshot");
         return this.client.callZome({
             cap_secret: null,
@@ -40,7 +40,7 @@ export class Interface {
         });
     }
 
-    async publishSnapshotAt(bucketIndex: number): Promise<Snapshot | null> {
+    async publishSnapshotAt(bucketIndex: number): Promise<Snapshot | undefined> {
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
@@ -86,7 +86,7 @@ export class Interface {
         });
     }
 
-    async getBadge(actionHash: ActionHash): Promise<Uint8Array | null> { 
+    async getBadge(actionHash: ActionHash): Promise<string | undefined> { 
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
@@ -96,7 +96,7 @@ export class Interface {
         });
     }
 
-    async getBadgeAction(): Promise<ActionHash | null> { 
+    async getBadgeAction(): Promise<ActionHash | undefined> { 
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
@@ -123,7 +123,7 @@ export class Interface {
     }
 
     // Generates a pair of links between the HRL of (badge_action&&eth_address) to the badge action
-    async generateHrl(badgeAction: ActionHash): Promise<ActionHash> {
+    async generateHrl(badgeAction: ActionHash): Promise<string> {
         const payload: GenerateHrlInput = {
             badgeAction: badgeAction
         };
@@ -143,8 +143,9 @@ export class Interface {
             hrl,
             badgeAction
         };
-
-          return this.client.callZome({
+        console.log("calling saveNft with payload: " + JSON.stringify(payload))
+        console.log(encodeHashToBase64(payload.badgeAction))
+        return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',
             zome_name: 'place',
@@ -153,7 +154,7 @@ export class Interface {
         });
     }
 
-    async getNft(hrl: String): Promise<NftRecord | null> {
+    async getNft(hrl: String): Promise<NftRecord | undefined> {
     
         return this.client.callZome({
             cap_secret: null,
@@ -164,7 +165,7 @@ export class Interface {
         });
     }
 
-    async viewNftImage(hrl: String): Promise<Uint8Array | null> { 
+    async viewNftImage(hrl: String): Promise<string | undefined> { 
         return this.client.callZome({
             cap_secret: null,
             role_name: 'place_nft',

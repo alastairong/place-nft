@@ -68,22 +68,18 @@ pub fn validate_create_link(
     zome_index: _,
     zome_type: hrl_link_type,
   } = LinkTypes::HRLtoBadgeLink.try_into()?;
-
+  
   if hrl_link_type == create_link.hashed.link_type {
-    debug!("Validating HRL link");
-    let link_author = create_link.hashed.content.author;
-    let target_action_hash = create_link.hashed.content.target_address.into_action_hash().unwrap();
-    debug!("Still validating");
+    let link_author = create_link.hashed.content.author.clone();
+    let target_action_hash = create_link.hashed.content.target_address.into_action_hash().unwrap(); 
     let target_action = must_get_action(target_action_hash)?;
     let target_author = target_action.hashed.content.author();
     if target_author == &link_author {
-      debug!("Validated HRL link");
       Ok(ValidateCallbackResult::Valid)
     } else {
       Ok(ValidateCallbackResult::Invalid("Only badge author can generate HRL link".to_string()))
     }
   } else {
-    debug!("Not an HRL link");
     Ok(ValidateCallbackResult::Valid)
   }
   
