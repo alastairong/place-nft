@@ -159,7 +159,7 @@
       async createBadge() {
         try { 
           console.log("creating badge")
-
+           // TODO, change the message that gets signed in the UI (see validation logic in the zome)
           const signPayload: Message = {
             NFTAuthor: await this.happ.myPubKey(),
             ethereumAddress: this.walletAddress, // remember that this is lower_cased

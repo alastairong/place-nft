@@ -125,7 +125,7 @@ fn generate_hrl(input: GenerateHrlInput) -> ExternResult<String> {
         let mut hrl: String = input.badge_action.to_string();
         hrl.push_str(&eth_address); // In future this should be a hash so it can't be reverse engineered
        
-        let hrl_anchor = get_anchor_typed_path(&hrl)?;
+        let hrl_anchor = Path::from(&hrl).path_entry_hash()?;
         // Create link from HRL to badge
         create_link(
             hrl_anchor.path_entry_hash()?, // use hrl as anchor
@@ -159,7 +159,7 @@ fn save_nft(input: SaveNftInput) -> ExternResult<ActionHash> { // TODO! reconcil
     let action_hash = create_entry(EntryTypes::NftRecord(nft_record.clone()))?;
     
     // Create link from HRL to NFT, for verification purposes
-    let hrl_anchor = get_anchor_typed_path(&input.hrl)?;
+    let hrl_anchor = Path::from(hrl).path_entry_hash()?;
 
     create_link(
         hrl_anchor.clone().path_entry_hash()?,         
@@ -174,7 +174,7 @@ fn save_nft(input: SaveNftInput) -> ExternResult<ActionHash> { // TODO! reconcil
 #[hdk_extern]
 fn get_nft(hrl: String) -> ExternResult<Option<NftRecord>> { // retrieve the registered NFT for a given HRL
     std::panic::set_hook(Box::new(zome_panic_hook));
-    let hrl_anchor = get_anchor_typed_path(&hrl)?;
+    let hrl_anchor = Path::from(hrl).path_entry_hash()?;
 
     let links_result = get_links(
         hrl_anchor.path_entry_hash()?,         
@@ -204,7 +204,7 @@ fn get_nft(hrl: String) -> ExternResult<Option<NftRecord>> { // retrieve the reg
 fn view_nft_image(hrl: String) -> ExternResult<Option<String>> { // retrieve the badge image for a given HRL
 
     std::panic::set_hook(Box::new(zome_panic_hook));
-    let hrl_anchor = get_anchor_typed_path(&hrl)?;
+    let hrl_anchor = Path::from(hrl).path_entry_hash()?;
 
     let links_result = get_links(
         hrl_anchor.path_entry_hash()?,         
