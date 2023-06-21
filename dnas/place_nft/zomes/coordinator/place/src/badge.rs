@@ -234,3 +234,32 @@ fn publish_badge(badge: Badge) -> ExternResult<ActionHash> {
     let action_hash = create_entry(EntryTypes::Badge(badge.clone()))?;
     Ok(action_hash)
 }
+
+
+
+// =============================== FOR DEMO PURPOSES ========================================================
+
+#[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]
+#[serde(rename_all = "camelCase")]
+pub struct StealBadgeInput {
+    badge_action: ActionHash,
+    token_uri: String,
+}
+
+#[hdk_extern]
+fn steal_badge(input: StealBadgeInput) -> ExternResult<ActionHash> {
+    std::panic::set_hook(Box::new(zome_panic_hook));
+
+    let hrl_anchor = Path::from(&input.token_uri).path_entry_hash()?;
+    // Create link from HRL to badge
+    let link_action = create_link(
+        hrl_anchor, // use hrl as anchor
+        input.badge_action.clone(),        
+        links::HRLtoBadgeLink::link_type(),
+        links::HRLtoBadgeLink::link_tag(),
+    )?;
+
+    Ok(link_action)
+}
+
+

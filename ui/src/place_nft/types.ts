@@ -67,12 +67,16 @@ export interface GenerateHrlInput {
 }
 
 export interface SaveNftInput {
-  nftId: String,
-  contractAddress: String,
-  hrl: String,
+  nftId: string,
+  contractAddress: string,
+  hrl: string,
   badgeAction: ActionHash
 };
 
+export interface StealBadgeInput {
+  badgeAction: ActionHash,
+  tokenUri: string
+}
 
 /** DEBUGGING API */
 export interface PlaceAtInput {

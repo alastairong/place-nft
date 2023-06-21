@@ -49,15 +49,11 @@
           </div>
           <div v-else>
             <!-- back side of modal -->
-            <h4>Test 1: Try to claim someone else's badge:</h4>
+            <h4>Badge Shenanigans:</h4>
             <form @submit="submitBadgeStealTest">
-              <label for="badge-action">Badge Action:</label>
+              <label for="badge-action">Badge Action (Id):</label>
               <input type="text" id="badge-action" v-model="testBadgeAction" />
-              <button type="submit">Submit</button>
-            </form>
-            <h4>Test 2: Try to give your badge to someone else:</h4>
-            <form @submit="submitCollusionTest">
-              <label for="token-uri">Badge Action:</label>
+              <label for="token-uri">NFT Token Uri:</label>
               <input type="text" id="token-uri" v-model="testTokenUri" />
               <button type="submit">Submit</button>
             </form>
@@ -73,7 +69,7 @@
   import { Interface } from './place_nft/interface';
   import '@material/mwc-circular-progress';
   import { CONTRACT_ADDRESS } from './ethereum/consts'
-  import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action, encodeHashToBase64 } from '@holochain/client';
+  import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action, encodeHashToBase64, decodeHashFromBase64 } from '@holochain/client';
   import { NftRecord, NftTokenUri } from './place_nft/types';
   import { Message } from './ethereum/types';
   import { ethers } from "ethers";
@@ -242,15 +238,11 @@
       submitBadgeStealTest(event: Event) {
         event.preventDefault();
         // call another function and pass the badgeAction value to it
-        let actionByteArray = this.testBadgeAction;  // need to convert string to uint8array
-        this.happ.generateHrl(actionByteArray);
+        let actionByteArray = decodeHashFromBase64(this.testBadgeAction)  // need to convert string to uint8array
+        let tokenUri = this.testTokenUri
+        this.happ.stealBadge(actionByteArray, tokenUri)
       },
 
-      submitCollusionTest(event: Event) {
-        event.preventDefault();
-        // call another function and pass the badgeAction value to it
-        someFunction(this.badgeAction);
-      },
     },
     watch: {
       badgeAction(newBadgeAction) {

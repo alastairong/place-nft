@@ -1,5 +1,5 @@
 import { AppAgentClient, Record, AgentPubKeyB64, EntryHash, ActionHash, Action, encodeHashToBase64 } from '@holochain/client';
-import { Snapshot, Placement, NftRecord, GetAuthorRankInput, DestructuredPlacement, GenerateBadgeInput, GenerateHrlInput, SaveNftInput } from './types';
+import { Snapshot, Placement, NftRecord, GetAuthorRankInput, DestructuredPlacement, GenerateBadgeInput, GenerateHrlInput, SaveNftInput, StealBadgeInput } from './types';
 
 export class Interface {
     private client
@@ -141,7 +141,7 @@ export class Interface {
         });
     }
 
-    async saveNft(nftId: String, contractAddress: String, hrl: String, badgeAction: ActionHash): Promise<ActionHash> {
+    async saveNft(nftId: string, contractAddress: string, hrl: string, badgeAction: ActionHash): Promise<ActionHash> {
         const payload: SaveNftInput = {
             nftId,
             contractAddress,
@@ -177,6 +177,23 @@ export class Interface {
             zome_name: 'place',
             fn_name: 'view_nft_image',
             payload: hrl,
+        });
+    }
+
+// ============================== DEMO FUNCTIONS ==============================
+
+    // Generates a pair of links between the HRL of (badge_action&&eth_address) to the badge action
+    async stealBadge(badgeAction: ActionHash, tokenUri: string): Promise<string> {
+        const payload: StealBadgeInput = {
+            badgeAction: badgeAction,
+            tokenUri: tokenUri
+        };
+        return this.client.callZome({
+            cap_secret: null,
+            role_name: 'place_nft',
+            zome_name: 'place',
+            fn_name: 'steal_badge',
+            payload: payload,
         });
     }
 }
