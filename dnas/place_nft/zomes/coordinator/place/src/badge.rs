@@ -128,7 +128,7 @@ fn generate_hrl(input: GenerateHrlInput) -> ExternResult<String> {
         let hrl_anchor = Path::from(&hrl).path_entry_hash()?;
         // Create link from HRL to badge
         create_link(
-            hrl_anchor.path_entry_hash()?, // use hrl as anchor
+            hrl_anchor, // use hrl as anchor
             input.badge_action.clone(),        
             links::HRLtoBadgeLink::link_type(),
             links::HRLtoBadgeLink::link_tag(),
@@ -159,10 +159,10 @@ fn save_nft(input: SaveNftInput) -> ExternResult<ActionHash> { // TODO! reconcil
     let action_hash = create_entry(EntryTypes::NftRecord(nft_record.clone()))?;
     
     // Create link from HRL to NFT, for verification purposes
-    let hrl_anchor = Path::from(hrl).path_entry_hash()?;
+    let hrl_anchor = Path::from(input.hrl).path_entry_hash()?;
 
     create_link(
-        hrl_anchor.clone().path_entry_hash()?,         
+        hrl_anchor.clone(),         
         action_hash.clone(),       
         links::HRLtoNftIdLink::link_type(),
         links::HRLtoNftIdLink::link_tag(),
@@ -177,7 +177,7 @@ fn get_nft(hrl: String) -> ExternResult<Option<NftRecord>> { // retrieve the reg
     let hrl_anchor = Path::from(hrl).path_entry_hash()?;
 
     let links_result = get_links(
-        hrl_anchor.path_entry_hash()?,         
+        hrl_anchor,         
         LinkTypes::HRLtoNftIdLink,
         Some(HRLtoNftIdLink::link_tag())
     )?;
@@ -207,7 +207,7 @@ fn view_nft_image(hrl: String) -> ExternResult<Option<String>> { // retrieve the
     let hrl_anchor = Path::from(hrl).path_entry_hash()?;
 
     let links_result = get_links(
-        hrl_anchor.path_entry_hash()?,         
+        hrl_anchor,         
         LinkTypes::HRLtoBadgeLink,
         Some(HRLtoBadgeLink::link_tag())
     )?;
@@ -233,10 +233,4 @@ fn view_nft_image(hrl: String) -> ExternResult<Option<String>> { // retrieve the
 fn publish_badge(badge: Badge) -> ExternResult<ActionHash> {
     let action_hash = create_entry(EntryTypes::Badge(badge.clone()))?;
     Ok(action_hash)
-}
-
-fn get_anchor_typed_path(anchor: &str) -> ExternResult<TypedPath> {
-    let typed_path = Path::from(anchor).typed(links::HRLtoNftIdLink::link_type())?; // This is hacky because it's an anchor so doesn't really need a type, but I need a type to create the path. Can't be the HRLtoBadgeLink type because that gets validated
-    typed_path.ensure()?;
-    Ok(typed_path)
 }

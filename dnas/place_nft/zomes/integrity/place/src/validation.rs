@@ -8,10 +8,10 @@ use anyhow::{anyhow, Result};
 
 /* Validation Rules
 1. Badge creator must demonstrate control of eth address (signature check)
-2. Only 1 action per badge entry for this user (other users can't commit same badge entry since agentKey is part of entry)
+2. Only 1 action per badge entry for this user // Only necessary if we enforce uniqueness of tokenuri in smart contract
 3. HRL must be created by same agent as linked badge
-4. Only 1 HRL per badge for this user (other users can't create HRL to same badge since we check that the author is the same)
-5. HRL must be based on the same ETH address as the badge
+4. Only 1 HRL per badge for this user  // Unimplemented. Not necessary if #5 is implemented since that would automatically enforce a 1:1 HRL<>Badge mapping
+5. HRL must be based on the same ETH address as the badge // Unimplemented. This would be necessary to prevent counterfeiting because otherwise you can mint your badge for other users and their NFTs
 6. Badge creator must have placed a placement
  */
 
@@ -59,10 +59,13 @@ fn validate_create_entry(
         // Define entry types for checks
         let placement_app_entry_type: EntryType = UnitEntryTypes::Placement.try_into()?; 
         let badge_app_entry_type: EntryType = UnitEntryTypes::Badge.try_into()?;
+        // let badge_app_entry_type = EntryType::App(AppEntryDef::new(2.into(), 0.into(), EntryVisibility::Public));
+        // let placement_app_entry_type = EntryType::App(AppEntryDef::new(0.into(), 0.into(), EntryVisibility::Public));
+
 
         // Create struct to track conditions
-        let mut hasPlacement = false;
-        let mut noSameBadge = true; // this exact badge hasn't been committed before
+        let mut has_placement = false;
+        let mut no_same_badge = true; // this exact badge hasn't been committed before
 
 
         // Go through agent activity history for further validation
@@ -70,20 +73,20 @@ fn validate_create_entry(
           match registered_action.action.hashed.action_type() {
             // If the action creates an entry...
             ActionType::Create => {
-              let entry_type = registered_action.action.hashed.content.into_entry_data().unwrap().1;
+              let entry_type = registered_action.action.hashed.content.entry_data().unwrap().1.clone();
               match entry_type {
                 // Validation Rule 2
-                badge_app_entry_type => {
+                et if et == badge_app_entry_type => {
                   let entry_hash = registered_action.action.hashed.content.entry_hash().unwrap();
                   
                   if entry_hash == created_badge_entry_hash {
-                    noSameBadge = false;
+                    no_same_badge = false;
                     continue
                   }
                 },
                 // Validation Rule 6
-                placement_app_entry_type => {
-                    hasPlacement = true;
+                et if et == placement_app_entry_type => {
+                  has_placement = true;
                     continue
                   }
                 _ => continue,
@@ -93,7 +96,7 @@ fn validate_create_entry(
           };
         }
 
-        if hasPlacement && noSameBadge {
+        if has_placement && no_same_badge {
           Ok(ValidateCallbackResult::Valid)
         } else {
           Ok(ValidateCallbackResult::Invalid("This creator cannot create this badge".to_string()))
@@ -115,8 +118,10 @@ pub fn validate_create_link(
   
   if hrl_link_type == create_link.hashed.link_type {
     let link_author = create_link.hashed.content.author.clone();
-    let target_action_hash = create_link.hashed.content.target_address.into_action_hash().unwrap(); 
-    let target_action = must_get_action(target_action_hash)?;
+    
+    let target_address = create_link.hashed.content.target_address.clone();
+    let target_action_hash = target_address.into_action_hash().unwrap(); 
+    let target_action = must_get_action(target_action_hash.clone())?;
     let target_author = target_action.hashed.content.author();
     
     // Validation rule 3
@@ -125,47 +130,47 @@ pub fn validate_create_link(
     }
 
     // Validation rule 5
-    // let link_base = create_link.hashed.content.base_address.into_entry_hash().unwrap();
-    // let badge_record = must_get_valid_record(target_action_hash)
-    // .map_err(|e| {
-    //     error!("Error fetching linked badge for validation rule 5: {}", e);
-    //     wasm_error!(WasmErrorInner::Guest("Error fetching linked badge for validation rule 5".into()))
-    //   })?;
+    let base_address = create_link.hashed.content.base_address.clone();
+    let link_base = base_address.into_entry_hash().unwrap();
+    let badge_record = must_get_valid_record(target_action_hash.clone())
+    .map_err(|e| {
+        error!("Error fetching linked badge for validation rule 5: {}", e);
+        wasm_error!(WasmErrorInner::Guest("Error fetching linked badge for validation rule 5".into()))
+      })?;
 
-    // let link_target_badge = badge_record.entry().to_app_option::<Badge>().unwrap().unwrap();
-    // let badge_eth_address = link_target_badge.eth_address;
+    let link_target_badge = badge_record.entry().to_app_option::<Badge>().unwrap().unwrap();
+    let badge_eth_address = link_target_badge.eth_address;
 
-    // let base_path_string = format!("{}{}", target_action_hash, badge_eth_address);
-    // let base_path = Path::from(base_path_string).path_entry_hash()?;
+    let base_path_string = format!("{}{}", target_action_hash, badge_eth_address);
 
-    // Validation rule 4
+    let base_path = Path::from(base_path_string.as_str()).path_entry_hash()?;
+
+    if link_base != base_path {
+      return Ok(ValidateCallbackResult::Invalid("HRL base address must be derived from target action and badge eth address".to_string()))
+    }
+
+    // // Validation rule 4
     let previous_action_hash = create_link.hashed.prev_action.clone();
     let filter = ChainFilter::new(previous_action_hash); // start chain filter from previous action to skip current badge action
     let author_actions = must_get_agent_activity(link_author.clone(), filter)?;
 
-    // Go through agent activity history for further validation
+    // Go through agent activity history to look for another HRL link
     for registered_action in author_actions.into_iter() {
       
-      match registered_action.action.hashed.action_type() {
-        // If the action creates a link...
-        ActionType::CreateLink => {
-          match registered_action.action.hashed { // get the target for the link
-            // Validation rule 2
-            hrl_link_type => {
-              let link_target: HoloHashed<Action> = registered_action.action.hashed.link_target().into();
-              if link_target == target_action_hash {
-                return Ok(ValidateCallbackResult::Invalid("Only 1 HRL per badge for this user".to_string()))
-              }
-            },
-            _ => continue,
-          };
-        }
+      match registered_action.action.hashed.content { 
+        // If the action creates a link
+        Action::CreateLink(create_link) => {
+          if hrl_link_type == create_link.link_type {
+            let link_target = create_link.target_address.into_action_hash().unwrap(); 
+            if link_target == target_action_hash {
+              return Ok(ValidateCallbackResult::Invalid("Only 1 HRL per badge for this user".to_string()))
+            }
+          }          
+        },
         _ => continue,
       };
     }
     Ok(ValidateCallbackResult::Valid)
-
-    
   } else {
     Ok(ValidateCallbackResult::Valid)
   }
@@ -193,4 +198,50 @@ fn verify_eth_signature(agent_pubkey: &str, eth_address: &str, signature: &str) 
   let pubkey = format!("{:02X?}", pubkey);
 
   Ok(pubkey.to_ascii_lowercase() == eth_address.to_ascii_lowercase())
+}
+
+
+// Copy this implementation from the HDK
+#[derive(
+  Clone, PartialEq, Debug, Default, serde::Deserialize, serde::Serialize, SerializedBytes,
+)]
+#[repr(transparent)]
+struct Component(#[serde(with = "serde_bytes")] Vec<u8>);
+
+/// Wrap bytes.
+impl From<Vec<u8>> for Component {
+  fn from(v: Vec<u8>) -> Self {
+      Self(v)
+  }
+}
+
+impl From<&str> for Component {
+  fn from(s: &str) -> Self {
+      let bytes: Vec<u8> = s
+          .chars()
+          .flat_map(|c| (c as u32).to_le_bytes().to_vec())
+          .collect();
+      Self::from(bytes)
+  }
+}
+
+#[derive(
+  Clone, Debug, PartialEq, Default, serde::Deserialize, serde::Serialize, SerializedBytes,
+)]
+#[repr(transparent)]
+struct Path(Vec<Component>);
+
+impl From<&str> for Path {
+  fn from(s: &str) -> Self {
+      Self(vec![Component::from(s)])
+  }
+}
+
+impl Path {
+  /// What is the hash for the current [ `Path` ]?
+  pub fn path_entry_hash(&self) -> ExternResult<holo_hash::EntryHash> {
+      hash_entry(Entry::App(AppEntryBytes(
+          SerializedBytes::try_from(self).map_err(|e| wasm_error!(e))?,
+      )))
+  }
 }

@@ -7,41 +7,60 @@
     <div v-else style="display: flex; flex-direction: column">
       <div class="modal-container">
         <div class="modal">
-          <h1>Game has ended!</h1>
-          <div v-if="!isWalletConnected">
-            <h2>Please connect your wallet to proceed</h2>
-            <button @click="connect">Connect Wallet</button>
-          </div>
-          <div v-if="isWalletConnected && !badgeAction">
-            <p>No badge found. If you have participated in the game you can create an badge</p>
-            <p>and NFT based on your contribution</p>
-            <button @click="createBadge">Create Badge</button>
-          </div>
-          <div v-if="isWalletConnected && !!badgeAction"> 
-            <img v-bind:src="badgeImage" />
-            <div v-if="!nftRecord">
-              <p>A badge has been found but no corresponding NFT</p>
-              <p>Do you want to mint your NFT?</p>
-              <button @click="mintNft">Mint NFT</button>
-            </div>
-            <div v-if="!!nftRecord">
-              <p> Your NFT has already been minted!</p>
-            </div>
+          <button class="flip-button" @click="flipModal">Test Me</button>
+          <div v-if="!isFlipped">
+            <!-- front side of modal -->
+            <h1>Game has ended!</h1>
             <div v-if="!isWalletConnected">
               <h2>Please connect your wallet to proceed</h2>
               <button @click="connect">Connect Wallet</button>
             </div>
-          </div>
+            <div v-if="isWalletConnected && !badgeAction">
+              <p>No badge found. If you have participated in the game you can create an badge</p>
+              <p>and NFT based on your contribution</p>
+              <button @click="createBadge">Create Badge</button>
+            </div>
+            <div v-if="isWalletConnected && !!badgeAction"> 
+              <img v-bind:src="badgeImage" />
+              <div v-if="!nftRecord">
+                <p>A badge has been found but no corresponding NFT</p>
+                <p>Do you want to mint your NFT?</p>
+                <button @click="mintNft">Mint NFT</button>
+              </div>
+              <div v-if="!!nftRecord">
+                <p> Your NFT has already been minted!</p>
+              </div>
+              <div v-if="!isWalletConnected">
+                <h2>Please connect your wallet to proceed</h2>
+                <button @click="connect">Connect Wallet</button>
+              </div>
+            </div>
 
-          <div v-if="isWalletConnected">
-            <h2>NFT Viewer</h2>
-            <p>You have the following NFTs</p>
-            <ul>
-              <li v-for="nft in usersNfts" :key="nft.nftId">
-                {{ nft.nftId }}: <a v-if="nft.hrl" @click="viewNft(nft.hrl, $event)">{{ nft.hrl }}</a><span v-else>No HRL</span>
-              </li>
-            </ul>
-            <img v-if="nftImage" :src="nftImage" />
+            <div v-if="isWalletConnected">
+              <h2>NFT Viewer</h2>
+              <p>You have the following NFTs</p>
+              <ul>
+                <li v-for="nft in usersNfts" :key="nft.nftId">
+                  {{ nft.nftId }}: <a v-if="nft.hrl" @click="viewNft(nft.hrl, $event)">{{ nft.hrl }}</a><span v-else>No HRL</span>
+                </li>
+              </ul>
+              <img v-if="nftImage" :src="nftImage" />
+            </div>
+          </div>
+          <div v-else>
+            <!-- back side of modal -->
+            <h4>Test 1: Try to claim someone else's badge:</h4>
+            <form @submit="submitBadgeStealTest">
+              <label for="badge-action">Badge Action:</label>
+              <input type="text" id="badge-action" v-model="testBadgeAction" />
+              <button type="submit">Submit</button>
+            </form>
+            <h4>Test 2: Try to give your badge to someone else:</h4>
+            <form @submit="submitCollusionTest">
+              <label for="token-uri">Badge Action:</label>
+              <input type="text" id="token-uri" v-model="testTokenUri" />
+              <button type="submit">Submit</button>
+            </form>
           </div>
         </div>
       </div>
@@ -66,9 +85,10 @@
   
   // Main page logic
   export default defineComponent({
-    data(): { loading: boolean; error: any, badgeAction: ActionHash | undefined, badgeImage: string | undefined, walletProvider: any, signer: any, hrl: string, nftRecord: NftRecord | undefined, isWalletConnected: Boolean, walletAddress: any, usersNfts: NftTokenUri[] | undefined, nftImage: any } {
+    data(): { loading: boolean; isFlipped: boolean; error: any, badgeAction: ActionHash | undefined, badgeImage: string | undefined, walletProvider: any, signer: any, hrl: string, nftRecord: NftRecord | undefined, isWalletConnected: Boolean, walletAddress: any, usersNfts: NftTokenUri[] | undefined, nftImage: any, testBadgeAction: string, testTokenUri: string } {
       return {
         loading: true,
+        isFlipped: false,
         error: undefined,
         badgeAction: undefined,
         badgeImage: undefined,
@@ -80,6 +100,8 @@
         walletAddress: undefined,
         usersNfts: undefined,
         nftImage: undefined,
+        testBadgeAction: "",
+        testTokenUri: "",
       }
     },
     async mounted() {
@@ -98,6 +120,10 @@
       
     },
     methods: {
+      flipModal() {
+        this.isFlipped = !this.isFlipped;
+      },
+
       async getBadgeImage() {
         console.log("getting badge image")
         try {
@@ -212,6 +238,19 @@
           console.log(util.inspect(e, { depth: null }));
         }
       },
+
+      submitBadgeStealTest(event: Event) {
+        event.preventDefault();
+        // call another function and pass the badgeAction value to it
+        let actionByteArray = this.testBadgeAction;  // need to convert string to uint8array
+        this.happ.generateHrl(actionByteArray);
+      },
+
+      submitCollusionTest(event: Event) {
+        event.preventDefault();
+        // call another function and pass the badgeAction value to it
+        someFunction(this.badgeAction);
+      },
     },
     watch: {
       badgeAction(newBadgeAction) {
@@ -269,5 +308,20 @@
     border: 3px solid #333;
     padding: 10px;
     background-color: #eee;
+  }
+
+  .flip-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+
+  .modal {
+    /* ... other styles */
+    transition: transform 1s;
+  }
+
+  .modal.is-flipped {
+    transform: rotateY(180deg);
   }
 </style>
