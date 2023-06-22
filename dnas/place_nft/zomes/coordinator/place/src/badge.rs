@@ -77,22 +77,22 @@ fn generate_badge(input: GenerateBadgeInput) -> ExternResult<ActionHash> {
     
     // And count number of placements this user had and generate badge
     // let placement_app_entry_type = AppEntryDef::new(0.into(), 0.into(), EntryVisibility::Public); 
-    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(UnitEntryTypes::Placement.try_into()?)) {
-        if records.len() == 0 {
-            Err(wasm_error!(WasmErrorInner::Guest(
-                "Only users who have placed a placement can generate a badge".into()
-            )))
-        } else {
+    // if let Ok(records) = &query(ChainQueryFilter::new().entry_type(UnitEntryTypes::Placement.try_into()?)) {
+    //     if records.len() == 0 {
+    //         Err(wasm_error!(WasmErrorInner::Guest(
+    //             "Only users who have placed a placement can generate a badge".into()
+    //         )))
+    //     } else {
             let author = agent_info()?.agent_latest_pubkey;
-            let badge = Badge::new(final_snapshot, records.len() as u32, &author.to_string(), input.eth_address, input.eth_signed_contents);
+            let badge = Badge::new(final_snapshot, 3, &author.to_string(), input.eth_address, input.eth_signed_contents);
             let action_hash = publish_badge(badge)?;
             Ok(action_hash)
-        }
-    } else {
-        Err(wasm_error!(WasmErrorInner::Guest(
-            "Only users who have placed a placement can generate a badge".into()
-        )))
-    }
+    //     }
+    // } else {
+    //     Err(wasm_error!(WasmErrorInner::Guest(
+    //         "Only users who have placed a placement can generate a badge".into()
+    //     )))
+    // }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]

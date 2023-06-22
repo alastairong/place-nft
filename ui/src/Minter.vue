@@ -182,16 +182,13 @@
         try { 
           console.log("creating badge")
            // TODO, change the message that gets signed in the UI (see validation logic in the zome)
-          const signPayload: Message = {
-            NFTAuthor: await this.happ.myPubKey(),
-            ethereumAddress: this.walletAddress, // remember that this is lower_cased
-          }
-
-          const signature = await this.signer.signMessage(signPayload) // sign the payload
-
+          let pubkey = await this.happ.myPubKey()
+          console.log("my pub key: " + pubkey)
+          const signature = await this.signer.signMessage(pubkey) // sign the payload
+          console.log(signature)
           this.badgeAction = await this.happ.generateBadgeImage(this.walletAddress, signature) // we don't send the rest of the info as validation logic should be able to calculate it from the badge entry
         } catch (e) {
-          console.log(e)
+          console.log(util.inspect(e, { depth: null }));
         }
         
         try {
@@ -200,7 +197,7 @@
           }
           
         } catch (e) {
-          console.log(e)
+          console.log(util.inspect(e, { depth: null }));
         }
       },
 
@@ -235,12 +232,20 @@
         }
       },
 
-      submitBadgeStealTest(event: Event) {
+      async submitBadgeStealTest(event: Event) {
+        console.log("submitting badge steal test")
         event.preventDefault();
         // call another function and pass the badgeAction value to it
-        let actionByteArray = decodeHashFromBase64(this.testBadgeAction)  // need to convert string to uint8array
-        let tokenUri = this.testTokenUri
-        this.happ.stealBadge(actionByteArray, tokenUri)
+        
+        try {
+          let actionByteArray = decodeHashFromBase64(this.testBadgeAction)  // need to convert string to uint8array
+          console.log(actionByteArray)
+
+          let tokenUri = this.testTokenUri
+          await this.happ.stealBadge(actionByteArray, tokenUri)
+        } catch (e) {
+          console.log(util.inspect(e, { depth: null }));
+        }
       },
 
     },
@@ -316,4 +321,21 @@
   .modal.is-flipped {
     transform: rotateY(180deg);
   }
+
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  input[type="text"] {
+    width: 40%;
+  }
+
 </style>

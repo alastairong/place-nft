@@ -8,9 +8,9 @@ export class Interface {
         this.client = client;
     }
 
-    async myPubKey(): Promise<AgentPubKeyB64> {
-        const pubKeyBytes = this.client.myPubKey;
-        return encodeHashToBase64(pubKeyBytes);
+    async myPubKey(): Promise<Uint8Array> {
+        return this.client.myPubKey;
+        
     }
 
     async getSnapshotAt(bucketIndex: number): Promise<Snapshot | undefined> {
