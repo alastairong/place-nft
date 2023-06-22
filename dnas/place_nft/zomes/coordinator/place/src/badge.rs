@@ -7,8 +7,6 @@ fn get_badge_action(_: ()) -> ExternResult<Option<ActionHash>> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     // Search if they already have committed their badge. It should be on their chain
     // If it does, return the hash of the action
-    // let ZomeInfo {id, ..} = zome_info()?; // There's only 1 app entry def in this zome
-    // let badge_app_entry_type = AppEntryDef::new(0.into(), id, EntryVisibility::Public);
     if let Ok(records) = &query(ChainQueryFilter::new().entry_type(UnitEntryTypes::Badge.try_into()?)) {
         if records.is_empty() {
             Ok(None)
@@ -76,23 +74,22 @@ fn generate_badge(input: GenerateBadgeInput) -> ExternResult<ActionHash> {
     let final_snapshot = final_snapshot_result?;
     
     // And count number of placements this user had and generate badge
-    // let placement_app_entry_type = AppEntryDef::new(0.into(), 0.into(), EntryVisibility::Public); 
-    // if let Ok(records) = &query(ChainQueryFilter::new().entry_type(UnitEntryTypes::Placement.try_into()?)) {
-    //     if records.len() == 0 {
-    //         Err(wasm_error!(WasmErrorInner::Guest(
-    //             "Only users who have placed a placement can generate a badge".into()
-    //         )))
-    //     } else {
+    if let Ok(records) = &query(ChainQueryFilter::new().entry_type(UnitEntryTypes::Placement.try_into()?)) {
+        if records.len() == 0 {
+            Err(wasm_error!(WasmErrorInner::Guest(
+                "Only users who have placed a placement can generate a badge".into()
+            )))
+        } else {
             let author = agent_info()?.agent_latest_pubkey;
             let badge = Badge::new(final_snapshot, 3, &author.to_string(), input.eth_address, input.eth_signed_contents);
             let action_hash = publish_badge(badge)?;
             Ok(action_hash)
-    //     }
-    // } else {
-    //     Err(wasm_error!(WasmErrorInner::Guest(
-    //         "Only users who have placed a placement can generate a badge".into()
-    //     )))
-    // }
+        }
+    } else {
+        Err(wasm_error!(WasmErrorInner::Guest(
+            "Only users who have placed a placement can generate a badge".into()
+        )))
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]

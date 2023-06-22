@@ -191,6 +191,7 @@
 
       async connect() {
         // your connect logic here
+        await this.walletProvider.disconnect();
         await this.walletProvider.enable();
         console.log(this.walletProvider)
         this.isWalletConnected = this.walletProvider.connected;
