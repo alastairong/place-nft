@@ -8,7 +8,6 @@ pub enum LinkTypes {
     OldToNewSnapshotLink,
     NewToOldSnapshotLink,
     HRLtoBadgeLink,
-    // BadgetoHRLLink // Unnecessary since we can validate that the badge only has 1 HRL by checking the source chain, since we already validate that the link and badge author are the same
     HRLtoNftIdLink
 }
 
@@ -23,19 +22,6 @@ impl HRLtoBadgeLink {
         LinkTypes::HRLtoBadgeLink
     }
 }
-
-
-// pub struct BadgetoHRLLink;
-// impl BadgetoHRLLink {
-//     const TAG: &'static [u8; 3] = b"hrl";
-//     /// Create the tag
-//     pub fn link_tag() -> LinkTag {
-//         LinkTag::new(*Self::TAG)
-//     }
-//     pub fn link_type() -> LinkTypes {
-//         LinkTypes::BadgetoHRLLink
-//     }
-// }
 
 pub struct HRLtoNftIdLink;
 impl HRLtoNftIdLink {

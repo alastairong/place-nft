@@ -38,13 +38,9 @@
 // }
 
 export interface Message {
-// eslint-disable-next-line @typescript-eslint/naming-convention
-NFTAuthor: string
-// eslint-disable-next-line @typescript-eslint/naming-convention
-ethereumAddress: string
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    NFTAuthor: string
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    ethereumAddress: string
 }
 
-export interface SignatureReturn {
-message: Message
-signature: string
-}

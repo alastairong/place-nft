@@ -14,3 +14,6 @@ image = { workspace = true }
 imageproc = { workspace = true }
 rusttype = { workspace = true }
 base64 = { workspace = true }
+ethers-core = { version = "2.0.5"}
+hex = "0.4.3"
+anyhow = "1.0"

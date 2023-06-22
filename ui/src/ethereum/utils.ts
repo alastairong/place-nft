@@ -1,9 +1,3 @@
-import type { SignatureReturn } from './types'
-
-export function isSignatureReturn(data: SignatureReturn | boolean): data is SignatureReturn {
-    return data !== undefined
-}
-
 export function isString(value: string | unknown): value is string {
   return value !== undefined
 }

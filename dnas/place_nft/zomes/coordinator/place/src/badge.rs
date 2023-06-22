@@ -7,8 +7,6 @@ fn get_badge_action(_: ()) -> ExternResult<Option<ActionHash>> {
     std::panic::set_hook(Box::new(zome_panic_hook));
     // Search if they already have committed their badge. It should be on their chain
     // If it does, return the hash of the action
-    // let ZomeInfo {id, ..} = zome_info()?; // There's only 1 app entry def in this zome
-    // let badge_app_entry_type = AppEntryDef::new(0.into(), id, EntryVisibility::Public);
     if let Ok(records) = &query(ChainQueryFilter::new().entry_type(UnitEntryTypes::Badge.try_into()?)) {
         if records.is_empty() {
             Ok(None)
@@ -76,7 +74,6 @@ fn generate_badge(input: GenerateBadgeInput) -> ExternResult<ActionHash> {
     let final_snapshot = final_snapshot_result?;
     
     // And count number of placements this user had and generate badge
-    // let placement_app_entry_type = AppEntryDef::new(0.into(), 0.into(), EntryVisibility::Public); 
     if let Ok(records) = &query(ChainQueryFilter::new().entry_type(UnitEntryTypes::Placement.try_into()?)) {
         if records.len() == 0 {
             Err(wasm_error!(WasmErrorInner::Guest(
@@ -84,7 +81,7 @@ fn generate_badge(input: GenerateBadgeInput) -> ExternResult<ActionHash> {
             )))
         } else {
             let author = agent_info()?.agent_latest_pubkey;
-            let badge = Badge::new(final_snapshot, records.len() as u32, &author.to_string(), input.eth_address, input.eth_signed_contents);
+            let badge = Badge::new(final_snapshot, 3, &author.to_string(), input.eth_address, input.eth_signed_contents);
             let action_hash = publish_badge(badge)?;
             Ok(action_hash)
         }
@@ -125,10 +122,10 @@ fn generate_hrl(input: GenerateHrlInput) -> ExternResult<String> {
         let mut hrl: String = input.badge_action.to_string();
         hrl.push_str(&eth_address); // In future this should be a hash so it can't be reverse engineered
        
-        let hrl_anchor = get_anchor_typed_path(&hrl)?;
+        let hrl_anchor = Path::from(&hrl).path_entry_hash()?;
         // Create link from HRL to badge
         create_link(
-            hrl_anchor.path_entry_hash()?, // use hrl as anchor
+            hrl_anchor, // use hrl as anchor
             input.badge_action.clone(),        
             links::HRLtoBadgeLink::link_type(),
             links::HRLtoBadgeLink::link_tag(),
@@ -159,10 +156,10 @@ fn save_nft(input: SaveNftInput) -> ExternResult<ActionHash> { // TODO! reconcil
     let action_hash = create_entry(EntryTypes::NftRecord(nft_record.clone()))?;
     
     // Create link from HRL to NFT, for verification purposes
-    let hrl_anchor = get_anchor_typed_path(&input.hrl)?;
+    let hrl_anchor = Path::from(input.hrl).path_entry_hash()?;
 
     create_link(
-        hrl_anchor.clone().path_entry_hash()?,         
+        hrl_anchor.clone(),         
         action_hash.clone(),       
         links::HRLtoNftIdLink::link_type(),
         links::HRLtoNftIdLink::link_tag(),
@@ -174,10 +171,10 @@ fn save_nft(input: SaveNftInput) -> ExternResult<ActionHash> { // TODO! reconcil
 #[hdk_extern]
 fn get_nft(hrl: String) -> ExternResult<Option<NftRecord>> { // retrieve the registered NFT for a given HRL
     std::panic::set_hook(Box::new(zome_panic_hook));
-    let hrl_anchor = get_anchor_typed_path(&hrl)?;
+    let hrl_anchor = Path::from(hrl).path_entry_hash()?;
 
     let links_result = get_links(
-        hrl_anchor.path_entry_hash()?,         
+        hrl_anchor,         
         LinkTypes::HRLtoNftIdLink,
         Some(HRLtoNftIdLink::link_tag())
     )?;
@@ -204,10 +201,10 @@ fn get_nft(hrl: String) -> ExternResult<Option<NftRecord>> { // retrieve the reg
 fn view_nft_image(hrl: String) -> ExternResult<Option<String>> { // retrieve the badge image for a given HRL
 
     std::panic::set_hook(Box::new(zome_panic_hook));
-    let hrl_anchor = get_anchor_typed_path(&hrl)?;
+    let hrl_anchor = Path::from(hrl).path_entry_hash()?;
 
     let links_result = get_links(
-        hrl_anchor.path_entry_hash()?,         
+        hrl_anchor,         
         LinkTypes::HRLtoBadgeLink,
         Some(HRLtoBadgeLink::link_tag())
     )?;
@@ -235,8 +232,31 @@ fn publish_badge(badge: Badge) -> ExternResult<ActionHash> {
     Ok(action_hash)
 }
 
-fn get_anchor_typed_path(anchor: &str) -> ExternResult<TypedPath> {
-    let typed_path = Path::from(anchor).typed(links::HRLtoNftIdLink::link_type())?; // This is hacky because it's an anchor so doesn't really need a type, but I need a type to create the path. Can't be the HRLtoBadgeLink type because that gets validated
-    typed_path.ensure()?;
-    Ok(typed_path)
+
+
+// =============================== FOR DEMO PURPOSES ========================================================
+
+#[derive(Clone, Debug, Serialize, Deserialize, SerializedBytes)]
+#[serde(rename_all = "camelCase")]
+pub struct StealBadgeInput {
+    badge_action: ActionHash,
+    token_uri: String,
 }
+
+#[hdk_extern]
+fn steal_badge(input: StealBadgeInput) -> ExternResult<ActionHash> {
+    std::panic::set_hook(Box::new(zome_panic_hook));
+
+    let hrl_anchor = Path::from(&input.token_uri).path_entry_hash()?;
+    // Create link from HRL to badge
+    let link_action = create_link(
+        hrl_anchor, // use hrl as anchor
+        input.badge_action.clone(),        
+        links::HRLtoBadgeLink::link_type(),
+        links::HRLtoBadgeLink::link_tag(),
+    )?;
+
+    Ok(link_action)
+}
+
+

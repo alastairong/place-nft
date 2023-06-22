@@ -38,7 +38,7 @@
   import { packPlacement, updateGrid, color2index, COLOR_PALETTE } from './place_nft/utils';
   import '@material/mwc-circular-progress';
   // TODO: Placements outside of a snapshot are not currently rendered
-  const GAME_START_TIME = 1687075008; // Must be updated to match DNA timestamp
+  const GAME_START_TIME = 1687456189; // Must be updated to match DNA timestamp
   const BUCKET_DURATION = 60 * 1; // 1 minutes
   const BUCKETS_PER_HOUR = 60 * 60 / BUCKET_DURATION;
   const HOURS_OF_GAMEPLAY = 1;
@@ -74,7 +74,8 @@
       this.calculateCurrentBucket();
       await this.loadInitialData();
       toRaw(this.client).on('signal', signal => {
-        if (signal.zome_name !== 'posts') return; 
+        console.log("Signal received: ", signal)
+        if (signal.zome_name !== 'place') return; 
         const payload = signal.payload as PlaceSignal;
         if (payload.type !== 'EntryCreated') return;
         if (payload.app_entry.type !== 'Placement') return;
