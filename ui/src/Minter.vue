@@ -49,7 +49,14 @@
           </div>
           <div v-else>
             <!-- back side of modal -->
-            <h4>Badge Shenanigans:</h4>
+            <h3>Badge Shenanigans:</h3>
+            <h4>Mint Fake NFT:</h4>
+            <form @submit="mintFakeNft">
+              <label for="badge-action">Badge Action (Id):</label>
+              <input type="text" id="badge-action" v-model="testBadgeAction" />
+              <button type="submit">Submit</button>
+            </form>
+            <h4>Create HRL:</h4>
             <form @submit="submitBadgeStealTest">
               <label for="badge-action">Badge Action (Id):</label>
               <input type="text" id="badge-action" v-model="testBadgeAction" />
@@ -57,6 +64,17 @@
               <input type="text" id="token-uri" v-model="testTokenUri" />
               <button type="submit">Submit</button>
             </form>
+
+            <div>
+              <h2>NFT Viewer</h2>
+              <p>You have the following NFTs</p>
+              <ul>
+                <li v-for="nft in usersNfts" :key="nft.nftId">
+                  {{ nft.nftId }}: <a v-if="nft.hrl" @click="viewNft(nft.hrl, $event)">{{ nft.hrl }}</a><span v-else>No HRL</span>
+                </li>
+              </ul>
+              <img v-if="nftImage" :src="nftImage" />
+            </div>
           </div>
         </div>
       </div>
@@ -232,11 +250,32 @@
         }
       },
 
+      async mintFakeNft(event: Event) {
+        event.preventDefault();
+        // call another function and pass the badgeAction value to it
+        try {
+          // instantiate smart contract
+          const nftContractInstance = new ethers.Contract(CONTRACT_ADDRESS, contractArtifact.abi, this.signer);
+          // make call to smart contract method
+                  
+          const tx = await nftContractInstance.mintNFT(this.testBadgeAction); // make contract call
+          const receipt = await tx.wait(); // wait for tx to be mined
+
+          // look for broadcasted event with nftId
+          const ethEvent = receipt.events.find((event: any) => event.event === 'Minted');
+          const newItemId = ethEvent.args.newItemId;
+          const nftId = newItemId.toNumber();
+
+          await this.fetchUserNfts()
+        } catch (e) {
+          console.log(util.inspect(e, { depth: null }));
+        }
+        
+      },
+
       async submitBadgeStealTest(event: Event) {
         console.log("submitting badge steal test")
         event.preventDefault();
-        // call another function and pass the badgeAction value to it
-        
         try {
           let actionByteArray = decodeHashFromBase64(this.testBadgeAction)  // need to convert string to uint8array
           console.log(actionByteArray)
@@ -246,7 +285,11 @@
         } catch (e) {
           console.log(util.inspect(e, { depth: null }));
         }
+
+        this.fetchUserNfts()
       },
+
+      
 
     },
     watch: {
